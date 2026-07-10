@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/browser-app/">
+    <Project Path="browser-app/FuiCs.Browser.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/FuiCs/FuiCs.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FuiCs.Tests/FuiCs.Tests.csproj" />
+  </Folder>
+</Solution>
