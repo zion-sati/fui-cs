@@ -19,9 +19,8 @@ dotnet workload install wasm-tools wasm-experimental
 From the repository root:
 
 ```bash
-npm ci
-npm run build:v2:browser-bridge
-npm run build:v2:fui-cs
+npm install
+npm run build
 ```
 
 The C# build stages the smoke app at:
@@ -45,13 +44,16 @@ http://127.0.0.1:8080/v2/fui-cs/index.html
 ## Tests
 
 ```bash
-npm run test:v2:fui-cs:unit
-npm run test:v2:fui-cs:integration
+npm test
+npm run test:integration
 ```
 
 The unit test checks the C# fluent builder against a call-recording backend.
 The integration test boots the published `wasmbrowser` app through the shared
 EffinDom browser bridge.
+
+The standalone repository consumes `@effindomv2/runtime` from npm. It does not
+contain or compile the EffinDOM runtime source.
 
 ## Publish Shape
 
