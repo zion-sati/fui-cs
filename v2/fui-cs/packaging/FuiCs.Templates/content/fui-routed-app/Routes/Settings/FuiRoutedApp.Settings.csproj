@@ -1,0 +1,19 @@
+<Project Sdk="NetWasm.Sdk/{NETWASM_SDK_VERSION}">
+
+  <!-- The settings route: an application of its own, loaded at /settings/. -->
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>page</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>FuiRoutedApp.Settings</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FuiCs" Version="{FUICS_VERSION}" />
+    <ProjectReference Include="../../Shared/FuiRoutedApp.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

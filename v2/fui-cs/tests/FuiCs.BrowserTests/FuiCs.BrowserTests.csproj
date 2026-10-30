@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The browser tests under dotnet test: each Playwright spec file in tests/ runs as one test, against the test pages
+       and the demo, which this project publishes into public/ before the tests run, in Chromium. The specs stay
+       TypeScript (Node and npm are already the build's). Set FuiCsSkipSitePublish to true to test the sites as they
+       are. -->
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="1.75.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_FuiCsTestSite Include="../../browser-app/FuiCs.Browser.csproj;../../demo/Home/FuiCs.Demo.Home.csproj" />
+  </ItemGroup>
+
+  <Target Name="FuiCsPrepareBrowserTests" BeforeTargets="VSTest" Condition="'$(FuiCsSkipSitePublish)' != 'true'">
+    <!-- The sites are not references of this project, so restore them before publishing them. -->
+    <MSBuild Projects="@(_FuiCsTestSite)" Targets="Restore" Properties="MSBuildRestoreSessionId=$([System.Guid]::NewGuid());Configuration=Release" />
+    <MSBuild Projects="@(_FuiCsTestSite)" Targets="Publish" Properties="Configuration=Release" />
+    <!-- Installs Chromium for Playwright when it is missing. Some systems Playwright does not recognise refuse the
+         install although an installed Chromium runs; then the specs report a missing browser themselves. -->
+    <Exec Command="npx --no-install playwright install chromium" WorkingDirectory="$(MSBuildThisFileDirectory)../../" ContinueOnError="WarnAndContinue" />
+  </Target>
+
+</Project>

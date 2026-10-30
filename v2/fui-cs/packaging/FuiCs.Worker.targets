@@ -1,0 +1,6 @@
+<Project>
+
+  <!-- buildTransitive/FuiCs.Worker.targets in the FuiCs.Worker package: a worker project's exports and entry. -->
+  <Import Project="$(MSBuildThisFileDirectory)FuiCs.Worker.Exports.targets" />
+
+</Project>

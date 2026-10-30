@@ -1,0 +1,27 @@
+<Project Sdk="NetWasm.Sdk" TreatAsLocalProperty="Version">
+
+  <!-- Packs the EffinDOM browser runtime as FuiCs.Runtime at the runtime's own version (FuiCsRuntimeDirectory and
+       FuiCsRuntimeVersion, Directory.Build.props), whatever Version the other packages take. The runtime (without
+       symbols and source maps) and the props that tell FuiCs where it is are staged when it packs
+       (build-support/FuiCs.Packaging.targets). It has no assemblies or dependencies; it targets both frameworks so
+       FuiCs can reference it while packing. -->
+  <Import Project="..\Package.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>netwasm0.1;net11.0</TargetFrameworks>
+    <OutputType>Library</OutputType>
+    <Version>$(FuiCsRuntimeVersion)</Version>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <Description>The EffinDOM browser runtime (bridge, manifest, core and UI WebAssembly, fonts) that FuiCs applications publish with.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <FuiCsPackageKind>runtime</FuiCsPackageKind>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

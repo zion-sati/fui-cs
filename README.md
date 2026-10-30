@@ -1,48 +1,70 @@
-# FUI-CS - C# bindings for EffinDom v2
+# FUI-CS - C# SDK for EffinDOM
 
-> **Early stage.** FUI-CS is a thin C# binding over the shared EffinDom v2 UI ABI.
-> It currently provides a smoke-level fluent builder, call-recording tests, and
-> a browser smoke app using the lightweight .NET `wasmbrowser` path.
-> Expect breaking changes.
+> **Early stage.** FUI-CS is under active development and its API will change.
 
-## Quickstart
+FUI-CS builds EffinDOM applications in C#. An application is a tree of retained
+nodes and controls (layout boxes, text, images, buttons, toggles, sliders,
+dropdowns, combo boxes, text inputs, dialogs, menus, popups, tooltips, virtual
+lists, custom drawing and bitmaps) with C# events, a theme and fluent
+builders. It compiles to WebAssembly with [NetWasm](https://github.com/zion-sati/NetWasm)
+as a `JsModule` and drives the EffinDOM UI runtime in the browser.
+
+```csharp
+namespace MyApp;
+
+static class FuiProgram
+{
+    public static IApplication CreateApplication() => Application.Create(BuildPage);
+
+    static Node BuildPage()
+    {
+        var greeting = new Text("Hello").FontSize(20.0f);
+        return FlexBox.Column(greeting, new Button("Greet").OnClick(_ => greeting.Text = "Hello, C#"))
+            .Padding(24.0f);
+    }
+}
+```
+
+## Applications
+
+An application needs only the .NET SDK:
 
 ```bash
-# Prerequisites: .NET 10 SDK + WebAssembly workloads
-dotnet workload install wasm-tools wasm-experimental
+dotnet new install FuiCs.Templates
+dotnet new fui-app -o MyApp        # or fui-routed-app, a shell with two routes
+cd MyApp
+dotnet publish -c Release -o site
+```
 
-# Clone and build against the published EffinDOM runtime
+`site/` is a static site; serve it at the root of any static file server.
+
+## Working on FUI-CS
+
+Prerequisites: the .NET SDK pinned in `global.json`, and Node.js 24+ with npm,
+which the build uses for its TypeScript side. No .NET workloads are needed:
+NetWasm restores its own Node, `wasm-ld` and `wasm-opt` through NuGet.
+
+```bash
 git clone https://github.com/zion-sati/fui-cs.git
 cd fui-cs
-npm install
-npm run build
+dotnet build
+dotnet test
+dotnet publish v2/fui-cs/demo/Home -c Release
 npm run serve
 ```
 
-Open `http://127.0.0.1:8080/v2/fui-cs/index.html`.
+Open `http://127.0.0.1:8080/v2/fui-cs/demo/` for the demo.
 
-Full quickstart: [docs/v2/fui-cs/QUICKSTART.md](docs/v2/fui-cs/QUICKSTART.md)
+The repository does not contain or build the EffinDOM runtime; it uses the
+published `@effindomv2/runtime` package.
 
-Run the call-recording unit smoke with `npm test`. The repository does not
-contain or build the EffinDOM runtime source; `npm run build` stages the
-published runtime package before building FUI-CS.
+## Docs
 
-## What's Here
-
-| Primitive | Status |
-|---|---|
-| `FlexBox` / `TextNode` builders | Implemented |
-| C# call-recording unit smoke | Implemented |
-| Browser smoke through EffinDom bridge | Implemented |
-| Controls, theming, signals, reconciliation | Planned |
-
-## Runtime Shape
-
-The browser target uses .NET's lightweight `wasmbrowser` template, not Blazor.
-The default publish mode is non-AOT + trimmed. This keeps the shared .NET
-runtime assets reusable across pages while keeping the app-specific C# payload
-small.
+- [Quickstart](docs/v2/fui-cs/QUICKSTART.md)
+- [SDK docs index](docs/v2/fui-cs/SDK_INDEX.md)
+- [API reference](docs/v2/fui-cs/reference/README.md)
+- [Contributor quickstart](docs/v2/fui-cs/CONTRIBUTOR_QUICKSTART.md)
 
 ## License
 
-AGPL-3.0-only (or commercial - see [COMMERCIAL.md](COMMERCIAL.md)).
+AGPL-3.0-only (or commercial - see [COMMERCIAL.md](v2/fui-cs/COMMERCIAL.md)).

@@ -1,0 +1,126 @@
+<Project>
+
+  <!-- The web shell a packaged FuiCs application publishes with, so the publish folder is a complete static site:
+       the EffinDOM runtime from the FuiCs.Runtime package (bridge.js, its manifest, runtime/ and fonts/), the
+       application harness, fui-app.js naming the application module and runtime, and index.html unless the
+       application publishes its own. Set FuiCsWebShell to false to stage the page yourself.
+
+       A routed application lists its other routes, each a FuiCs application project of its own:
+
+         <FuiCsRoute Include="Routes/Settings/Settings.csproj" RoutePath="/settings/" Title="Settings" />
+
+       The project itself is the home route, at the site's root. Each route publishes into the folder its path names,
+       with the routed harness and a copy of the page, so every route's address loads directly. FuiCsRouteBase is the
+       address the site is served at (/ by default), FuiCsHomeTitle the home route's title, and a route's module is
+       named after its project file.
+
+       FuiCsHarness names a TypeScript harness to bundle (with npx esbuild, so it needs Node and esbuild) in place of the
+       prebuilt one, for an application with host services or events; FuiCsHarnessEsbuildArguments adds esbuild
+       options. FuiCsPage names a page to publish in place of the default one; __FUICS_ROUTE_BASE__ in it becomes
+       FuiCsRouteBase. Either way the page loads fui-app.js, bridge.js and harness.js, which a routed site's page names
+       from the site's base, since every route's folder holds a copy. -->
+  <PropertyGroup>
+    <FuiCsWebShell Condition="'$(FuiCsWebShell)' == ''">true</FuiCsWebShell>
+    <FuiCsRouteBase Condition="'$(FuiCsRouteBase)' == ''">/</FuiCsRouteBase>
+    <FuiCsHomeTitle Condition="'$(FuiCsHomeTitle)' == ''">$(AssemblyName)</FuiCsHomeTitle>
+    <_FuiCsShellDirectory>$(MSBuildThisFileDirectory)shell/</_FuiCsShellDirectory>
+  </PropertyGroup>
+
+  <!-- The site's page: FuiCsPage, or the default for a routed or a single-application site, with the base filled in. -->
+  <Target Name="_FuiCsResolvePage">
+    <PropertyGroup>
+      <_FuiCsRouteBase>$([MSBuild]::EnsureTrailingSlash('$(FuiCsRouteBase)'))</_FuiCsRouteBase>
+      <_FuiCsPageTemplate Condition="'$(FuiCsPage)' != ''">$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(FuiCsPage)'))</_FuiCsPageTemplate>
+      <_FuiCsPageTemplate Condition="'$(FuiCsPage)' == '' AND '@(FuiCsRoute)' != ''">$(_FuiCsShellDirectory)routed-index.html</_FuiCsPageTemplate>
+      <_FuiCsPageTemplate Condition="'$(FuiCsPage)' == '' AND '@(FuiCsRoute)' == ''">$(_FuiCsShellDirectory)index.html</_FuiCsPageTemplate>
+      <_FuiCsPage>$([System.IO.File]::ReadAllText('$(_FuiCsPageTemplate)').Replace('__FUICS_ROUTE_BASE__', '$(_FuiCsRouteBase)'))</_FuiCsPage>
+    </PropertyGroup>
+  </Target>
+
+  <!-- The site needs the NetWasm output, not the assemblies it was compiled from or their XML documentation. -->
+  <Target Name="FuiCsOmitAssembliesFromSite" AfterTargets="ComputeResolvedFilesToPublishList" Condition="'$(_FuiCsIsApplication)' == 'true' AND '$(FuiCsWebShell)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.dll' OR '%(Extension)' == '.pdb'" />
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.xml' AND Exists('%(RootDir)%(Directory)%(Filename).dll')" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="FuiCsPublishWebShell" AfterTargets="Publish" DependsOnTargets="_FuiCsPublishRoutes;_FuiCsResolvePage" Condition="'$(_FuiCsIsApplication)' == 'true' AND '$(FuiCsWebShell)' == 'true'">
+    <Error Condition="'$(FuiCsRuntimeDirectory)' == '' OR !Exists('$(FuiCsRuntimeDirectory)effindom.v2.manifest.json')"
+           Text="The EffinDOM runtime is missing from '$(FuiCsRuntimeDirectory)': the FuiCs.Runtime package, which FuiCs depends on, sets FuiCsRuntimeDirectory." />
+    <PropertyGroup>
+      <_FuiCsPublishDir>$([MSBuild]::EnsureTrailingSlash('$(PublishDir)'))</_FuiCsPublishDir>
+      <_FuiCsRouted>false</_FuiCsRouted>
+      <_FuiCsRouted Condition="'@(FuiCsRoute)' != ''">true</_FuiCsRouted>
+      <!-- The harness to bundle: FuiCsHarness, or in the fui-cs repository, which has no prebuilt one, its source. -->
+      <_FuiCsHarnessSource>$(FuiCsHarness)</_FuiCsHarnessSource>
+      <_FuiCsHarnessSource Condition="'$(_FuiCsHarnessSource)' == '' AND '$(_FuiCsRouted)' != 'true'">$(_FuiCsAppHarnessSource)</_FuiCsHarnessSource>
+      <_FuiCsHarnessSource Condition="'$(_FuiCsHarnessSource)' == '' AND '$(_FuiCsRouted)' == 'true'">$(_FuiCsRoutedHarnessSource)</_FuiCsHarnessSource>
+      <!-- A runtime without the package's props (one built from source) names its hash in its manifest. -->
+      <FuiCsRuntimeSetHash Condition="'$(FuiCsRuntimeSetHash)' == ''">$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText('$(FuiCsRuntimeDirectory)effindom.v2.manifest.json')), '(?s).*"runtime_set_hash"\s*:\s*"([^"]+)".*', '$1'))</FuiCsRuntimeSetHash>
+      <!-- A routed site's page is in every route's folder, so it names the manifest from the site's base. -->
+      <_FuiCsManifestUrl>./effindom.v2.manifest.json</_FuiCsManifestUrl>
+      <_FuiCsManifestUrl Condition="'$(_FuiCsRouted)' == 'true'">$(_FuiCsRouteBase)effindom.v2.manifest.json</_FuiCsManifestUrl>
+      <_FuiCsRuntimeConfig>window.__effindomRuntime = Object.assign({}, window.__effindomRuntime, { manifestUrls: ['$(_FuiCsManifestUrl)'], expectedRuntimeSetHash: '$(FuiCsRuntimeSetHash)' })%3B</_FuiCsRuntimeConfig>
+      <_FuiCsHomeRoute>{ key: 'home', routePath: '$(_FuiCsRouteBase)', modulePath: '$(_FuiCsRouteBase)browser/$(AssemblyName).mjs', title: '$(FuiCsHomeTitle)' }</_FuiCsHomeRoute>
+      <_FuiCsOtherRoutes>@(_FuiCsRouteProject->'{ key: %27%(Key)%27, routePath: %27$(_FuiCsRouteBase)%(Key)/%27, modulePath: %27$(_FuiCsRouteBase)%(Key)/%(Filename).mjs%27, title: %27%(Title)%27 }', ', ')</_FuiCsOtherRoutes>
+    </PropertyGroup>
+    <ItemGroup>
+      <!-- The runtime proper, as the FuiCs.Runtime package carries it: not a runtime folder's own test page. -->
+      <_FuiCsRuntimeFile Include="$(FuiCsRuntimeDirectory)bridge.js*;$(FuiCsRuntimeDirectory)effindom.v2.manifest.json" />
+      <_FuiCsRuntimeFile Include="$(FuiCsRuntimeDirectory)runtime/**/*" Folder="runtime/" />
+      <_FuiCsRuntimeFile Include="$(FuiCsRuntimeDirectory)fonts/**/*" Folder="fonts/" />
+      <_FuiCsPrebuiltHarness Include="$(_FuiCsShellDirectory)harness.js" Condition="'$(_FuiCsHarnessSource)' == '' AND '$(_FuiCsRouted)' != 'true'" />
+      <_FuiCsPrebuiltHarness Include="$(_FuiCsShellDirectory)routed-harness.js" Condition="'$(_FuiCsHarnessSource)' == '' AND '$(_FuiCsRouted)' == 'true'" />
+      <_FuiCsAppConfigLine Include="window.__fuiCsApp = { module: './browser/$(AssemblyName).mjs' }%3B" Condition="'$(_FuiCsRouted)' != 'true'" />
+      <_FuiCsAppConfigLine Include="window.__fuiCsRoutes = { routeBase: '$(_FuiCsRouteBase)', routes: [$(_FuiCsHomeRoute), $(_FuiCsOtherRoutes)] }%3B" Condition="'$(_FuiCsRouted)' == 'true'" />
+      <_FuiCsAppConfigLine Include="$(_FuiCsRuntimeConfig)" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_FuiCsRuntimeFile)" DestinationFiles="@(_FuiCsRuntimeFile->'$(_FuiCsPublishDir)%(Folder)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_FuiCsPrebuiltHarness)" DestinationFiles="$(_FuiCsPublishDir)harness.js" SkipUnchangedFiles="true" />
+    <Exec Condition="'$(_FuiCsHarnessSource)' != ''" WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="npx --no-install esbuild &quot;$(_FuiCsHarnessSource)&quot; --bundle --format=esm --platform=browser --target=es2022 --minify --sourcemap --log-level=warning $(FuiCsHarnessEsbuildArguments) --outfile=&quot;$(_FuiCsPublishDir)harness.js&quot;" />
+    <WriteLinesToFile File="$(_FuiCsPublishDir)fui-app.js" Lines="@(_FuiCsAppConfigLine)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <!-- A single-application site's page, unless the application publishes its own. -->
+    <WriteLinesToFile Condition="'$(_FuiCsRouted)' != 'true' AND ('$(FuiCsPage)' != '' OR !Exists('$(_FuiCsPublishDir)index.html'))"
+                      File="$(_FuiCsPublishDir)index.html" Lines="$([MSBuild]::Escape($(_FuiCsPage)))" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <!-- Publishes each route project into a staging folder, then copies its module and assets into its route's folder. -->
+  <Target Name="_FuiCsPublishRoutes" Condition="'$(_FuiCsIsApplication)' == 'true' AND '$(FuiCsWebShell)' == 'true' AND '@(FuiCsRoute)' != ''">
+    <PropertyGroup>
+      <_FuiCsPublishDir>$([MSBuild]::EnsureTrailingSlash('$(PublishDir)'))</_FuiCsPublishDir>
+      <_FuiCsRouteStaging>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'fuics-routes'))</_FuiCsRouteStaging>
+    </PropertyGroup>
+    <ItemGroup>
+      <_FuiCsRouteProject Include="@(FuiCsRoute->'%(FullPath)')">
+        <Key>$([System.String]::Copy('%(FuiCsRoute.RoutePath)').Trim('/'))</Key>
+      </_FuiCsRouteProject>
+    </ItemGroup>
+    <Error Condition="'%(_FuiCsRouteProject.Key)' == ''" Text="The route %(_FuiCsRouteProject.Identity) needs a RoutePath other than /: the application's own project is the home route." />
+    <Error Condition="'%(_FuiCsRouteProject.Title)' == ''" Text="The route %(_FuiCsRouteProject.Identity) needs a Title." />
+    <!-- A route is not a reference of this project, so restore it before publishing it. -->
+    <MSBuild Projects="@(_FuiCsRouteProject)" Targets="Restore" Properties="MSBuildRestoreSessionId=$([System.Guid]::NewGuid());Configuration=$(Configuration)" />
+    <MSBuild Projects="@(_FuiCsRouteProject)" Targets="Publish" Properties="Configuration=$(Configuration);PublishDir=$(_FuiCsRouteStaging)%(_FuiCsRouteProject.Key)/;FuiCsWebShell=false" />
+    <ItemGroup>
+      <_FuiCsRouteModuleFile Include="$(_FuiCsRouteStaging)%(_FuiCsRouteProject.Key)/browser/**/*">
+        <Key>%(_FuiCsRouteProject.Key)</Key>
+      </_FuiCsRouteModuleFile>
+      <_FuiCsRouteAssetFile Include="$(_FuiCsRouteStaging)%(_FuiCsRouteProject.Key)/assets/**/*">
+        <Key>%(_FuiCsRouteProject.Key)</Key>
+      </_FuiCsRouteAssetFile>
+    </ItemGroup>
+    <Copy SourceFiles="@(_FuiCsRouteModuleFile)" DestinationFiles="@(_FuiCsRouteModuleFile->'$(_FuiCsPublishDir)%(Key)/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_FuiCsRouteAssetFile)" DestinationFiles="@(_FuiCsRouteAssetFile->'$(_FuiCsPublishDir)%(Key)/assets/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- The page at the root and in every route's folder. -->
+  <Target Name="_FuiCsWriteRoutedPages" AfterTargets="FuiCsPublishWebShell" Condition="'$(_FuiCsIsApplication)' == 'true' AND '$(FuiCsWebShell)' == 'true' AND '@(FuiCsRoute)' != ''">
+    <ItemGroup>
+      <_FuiCsPageFile Include="$(_FuiCsPublishDir)index.html" />
+      <_FuiCsPageFile Include="@(_FuiCsRouteProject->'$(_FuiCsPublishDir)%(Key)/index.html')" />
+    </ItemGroup>
+    <WriteLinesToFile File="%(_FuiCsPageFile.Identity)" Lines="$([MSBuild]::Escape($(_FuiCsPage)))" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+</Project>

@@ -1,56 +1,21 @@
 namespace FuiCs;
 
-public enum NodeType : uint
-{
-    FlexBox = 0,
-    Text = 1,
-}
-
-public enum Unit : uint
-{
-    Pixel = 0,
-    Auto = 1,
-    Star = 2,
-}
-
-public enum FlexDirection : uint
-{
-    Column = 0,
-    Row = 1,
-}
-
-public interface IFuiBackend
-{
-    void Reset();
-    ulong CreateNode(uint nodeType);
-    void DeleteNode(ulong handle);
-    void AddChild(ulong parent, ulong child);
-    void RemoveChild(ulong parent, ulong child);
-    void SetRoot(ulong handle);
-    void SetWidth(ulong handle, float value, uint unit);
-    void SetHeight(ulong handle, float value, uint unit);
-    void SetBgColor(ulong handle, uint color);
-    void SetText(ulong handle, string text);
-    void SetFont(ulong handle, uint fontId, float size);
-    void SetTextColor(ulong handle, uint color);
-    void SetPadding(ulong handle, float top, float right, float bottom, float left);
-    void SetFlexDirection(ulong handle, uint direction);
-    void CommitFrame();
-    void ResizeWindow(float width, float height);
-    void RequestRender();
-    float GetViewportWidth();
-    float GetViewportHeight();
-}
-
+/// <summary>Holds the ABI implementation fui-cs talks to: JSImport in the browser, a recording double in tests.</summary>
 public static class Runtime
 {
-    private static IFuiBackend? backend;
+    private static IFuiAbi? abi;
 
-    public static IFuiBackend Backend =>
-        backend ?? throw new InvalidOperationException("FuiCs.Runtime.Init must be called before mounting an application.");
+    /// <summary>The ABI the SDK calls; throws until the host installs one.</summary>
+    public static IFuiAbi Abi =>
+        abi ?? throw new InvalidOperationException("FuiCs.Runtime.Init must be called before mounting an application.");
 
-    public static void Init(IFuiBackend nextBackend)
+    /// <summary>Whether the host has installed the ABI.</summary>
+    public static bool IsInitialized => abi is not null;
+
+    /// <summary>Installs the ABI, as the host does at startup or a test does with a recording one.</summary>
+    public static void Init(IFuiAbi nextAbi)
     {
-        backend = nextBackend;
+        abi = nextAbi;
+        FontRegistry.FlushPendingFallbacks();
     }
 }

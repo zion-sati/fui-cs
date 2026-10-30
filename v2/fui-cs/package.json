@@ -5,9 +5,17 @@
   "license": "AGPL-3.0-only OR LicenseRef-EffinDom-Commercial",
   "type": "module",
   "scripts": {
+    "check:generated": "bash scripts/dotnet.sh build FuiCs.slnx -p:FuiCsCheckGenerated=true",
+    "generate:docs": "bash scripts/generate-docs.sh",
+    "check:docs": "bash scripts/generate-docs.sh --check",
+    "check:examples": "bash scripts/check-doc-examples.sh",
     "build": "bash scripts/build.sh",
+    "pack": "bash scripts/pack.sh",
+    "test:package": "bash scripts/test-package.sh",
     "test:unit": "bash scripts/test-unit.sh",
-    "test:integration": "npm --prefix ../.. run build:v2:browser-bridge && npm run build && playwright test -c playwright.config.ts",
+    "test:unit:desktop": "bash scripts/test-unit.sh desktop",
+    "test:unit:netwasm": "bash scripts/test-unit.sh netwasm",
+    "test:browser": "bash scripts/dotnet.sh test tests/FuiCs.BrowserTests/FuiCs.BrowserTests.csproj",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

@@ -1,0 +1,27 @@
+<Project Sdk="NetWasm.Sdk">
+
+  <!-- The runtime a fui-cs worker project uses inside its Web Worker; FuiCs.Worker.Exports.targets compiles the
+       worker's exports and entry into each worker project. -->
+  <Import Project="..\..\packaging\Package.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>netwasm0.1;net11.0</TargetFrameworks>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FuiCs.Workers</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <Description>The worker-project library for FuiCs: entries a page's Worker runs in a Web Worker.</Description>
+    <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+    <FuiCsPackageKind>worker</FuiCsPackageKind>
+  </PropertyGroup>
+
+  <!-- What the FuiCs.Worker package adds beside the library: the worker targets and their source; the worker's
+       JSImport module is staged when it packs (build-support/FuiCs.Packaging.targets). -->
+  <ItemGroup>
+    <None Include="..\..\packaging\FuiCs.Worker\README.md" Pack="true" PackagePath="" />
+    <None Include="..\..\packaging\FuiCs.Worker.targets;..\FuiCs.Exports\FuiCs.Worker.Exports.targets;..\FuiCs.Exports\WorkerExports.cs" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+
+</Project>

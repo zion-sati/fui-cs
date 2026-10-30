@@ -1,0 +1,72 @@
+<Project DefaultTargets="Build">
+
+  <!-- The JavaScript side of the fui-cs build, which every project here runs before it builds (Directory.Build.targets),
+       so dotnet build is the only command a contributor needs: the npm packages, the generated ABI bindings, the host
+       generator tools, and the JSImport modules the FuiCs and FuiCs.Worker targets link into applications and workers.
+       Every step is incremental, and MSBuild runs this project once per build however many projects ask for it.
+
+       It needs Node 24 and npm. Set FuiCsCheckGenerated to true to fail on an out-of-date generated file instead of
+       rewriting it, as CI does. -->
+
+  <PropertyGroup>
+    <FuiCsRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..'))</FuiCsRoot>
+    <FuiCsRepositoryRoot>$([MSBuild]::NormalizeDirectory('$(FuiCsRoot)', '..', '..'))</FuiCsRepositoryRoot>
+    <FuiCsBuildDir>$(FuiCsRoot)build/</FuiCsBuildDir>
+    <!-- In the EffinDOM repository the runtime builds from source; standalone it comes from npm at the repository root. -->
+    <FuiCsRuntimeFromSource>false</FuiCsRuntimeFromSource>
+    <FuiCsRuntimeFromSource Condition="Exists('$(FuiCsRepositoryRoot)v2/browser-bridge/src/index.ts')">true</FuiCsRuntimeFromSource>
+    <_FuiCsCheckFlag Condition="'$(FuiCsCheckGenerated)' == 'true'"> --check</_FuiCsCheckFlag>
+    <_FuiCsEsbuild>npx --no-install esbuild</_FuiCsEsbuild>
+    <_FuiCsNodeEsbuildArgs>--bundle --format=esm --platform=node --target=node20 --packages=external --log-level=warning</_FuiCsNodeEsbuildArgs>
+    <_FuiCsBrowserEsbuildArgs>--bundle --format=esm --platform=browser --target=es2022 --log-level=warning</_FuiCsBrowserEsbuildArgs>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <_FuiCsNodePackages Include="$(FuiCsRoot)" />
+    <_FuiCsNodePackages Include="$(FuiCsRepositoryRoot)" Condition="'$(FuiCsRuntimeFromSource)' != 'true' AND Exists('$(FuiCsRepositoryRoot)package-lock.json')" />
+
+    <!-- The ABI generator reads the C headers and the SDK's C# for the ABI methods it uses. -->
+    <_FuiCsAbiInput Include="$(FuiCsRepositoryRoot)v2/abi/**/*.ts;$(FuiCsRepositoryRoot)v2/core/include/effindom.h;$(FuiCsRepositoryRoot)v2/ui/include/effindom_ui.h" />
+    <_FuiCsAbiInput Include="$(FuiCsRoot)src/**/*.cs;$(FuiCsRoot)browser-app/**/*.cs" Exclude="$(FuiCsRoot)**/obj/**;$(FuiCsRoot)**/bin/**;$(FuiCsRoot)**/*.g.cs" />
+
+    <_FuiCsHostToolInput Include="$(FuiCsRoot)scripts/generate-host-*.ts;$(FuiCsRoot)scripts/hostgen-cli.ts;$(FuiCsRepositoryRoot)v2/hostgen/src/**/*.ts" />
+    <_FuiCsHostTool Include="generate-host-services;generate-host-events" />
+
+    <_FuiCsModuleInput Include="$(FuiCsRoot)browser/imports/**/*.ts;$(FuiCsRoot)browser/worker/**/*.ts" />
+    <_FuiCsPageModule Include="$(FuiCsRoot)browser/imports/generated/effindom_v2_ui.ts;$(FuiCsRoot)browser/imports/generated/fui_host.ts;$(FuiCsRoot)browser/imports/generated/fui_fetch_host.ts;$(FuiCsRoot)browser/imports/fui_host_buffers.ts" />
+  </ItemGroup>
+
+  <Target Name="Build" DependsOnTargets="FuiCsRestoreNodePackages;FuiCsGenerateAbi;FuiCsBundleHostTools;FuiCsBundleModules" />
+
+  <Target Name="FuiCsCheckNode">
+    <Exec Command="npm --version" StandardOutputImportance="low" IgnoreExitCode="true" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="_FuiCsNpmExitCode" />
+    </Exec>
+    <Error Condition="'$(_FuiCsNpmExitCode)' != '0'" Text="Building fui-cs needs Node 24 and npm on the PATH (https://nodejs.org); applications built with the FuiCs packages need neither." />
+  </Target>
+
+  <!-- npm ci when a package lock is newer than the packages it installed. -->
+  <Target Name="FuiCsRestoreNodePackages" DependsOnTargets="FuiCsCheckNode" Inputs="%(_FuiCsNodePackages.FullPath)package.json;%(_FuiCsNodePackages.FullPath)package-lock.json" Outputs="%(_FuiCsNodePackages.FullPath)node_modules/.package-lock.json">
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="%(_FuiCsNodePackages.FullPath)" />
+  </Target>
+
+  <!-- The C# ABI bindings, the JSImport shims and the module list, from the C headers and the SDK's uses. -->
+  <Target Name="FuiCsGenerateAbi" Inputs="@(_FuiCsAbiInput)" Outputs="$(FuiCsBuildDir)abi.stamp">
+    <Exec Command="$(_FuiCsEsbuild) ../abi/generate-fui-cs.ts $(_FuiCsNodeEsbuildArgs) --outfile=build/generate-abi.mjs" WorkingDirectory="$(FuiCsRoot)" />
+    <Exec Command="node build/generate-abi.mjs fui-cs-ffi$(_FuiCsCheckFlag)" WorkingDirectory="$(FuiCsRoot)" />
+    <Touch Files="$(FuiCsBuildDir)abi.stamp" AlwaysCreate="true" />
+  </Target>
+
+  <!-- The host-service and host-event generators that projects with FuiCsHostServices or FuiCsHostEvents items run. -->
+  <Target Name="FuiCsBundleHostTools" Inputs="@(_FuiCsHostToolInput)" Outputs="@(_FuiCsHostTool->'$(FuiCsBuildDir)hostgen/%(Identity).mjs')">
+    <Exec Command="$(_FuiCsEsbuild) scripts/%(_FuiCsHostTool.Identity).ts $(_FuiCsNodeEsbuildArgs) --outfile=build/hostgen/%(_FuiCsHostTool.Identity).mjs" WorkingDirectory="$(FuiCsRoot)" />
+  </Target>
+
+  <!-- The JSImport modules: the page modules every application links (build/imports/) and the module every worker
+       links (build/worker-imports/). -->
+  <Target Name="FuiCsBundleModules" Inputs="@(_FuiCsModuleInput)" Outputs="@(_FuiCsPageModule->'$(FuiCsBuildDir)imports/%(Filename).mjs');$(FuiCsBuildDir)worker-imports/fui_worker_host.mjs">
+    <Exec Command="$(_FuiCsEsbuild) @(_FuiCsPageModule->'&quot;%(FullPath)&quot;', ' ') $(_FuiCsBrowserEsbuildArgs) --outdir=build/imports --entry-names=[name] --out-extension:.js=.mjs" WorkingDirectory="$(FuiCsRoot)" />
+    <Exec Command="$(_FuiCsEsbuild) browser/worker/fui_worker_host.ts $(_FuiCsBrowserEsbuildArgs) --outfile=build/worker-imports/fui_worker_host.mjs" WorkingDirectory="$(FuiCsRoot)" />
+  </Target>
+
+</Project>

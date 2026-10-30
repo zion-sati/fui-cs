@@ -1,25 +1,32 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="NetWasm.Sdk">
 
+  <!-- One TUnit project, two lanes: desktop .NET (dotnet run -f net11.0) for fast runs, and
+       NetWasm (dotnet test -f netwasm0.1) to catch compiler-specific behavior. -->
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFrameworks>netwasm0.1;net11.0</TargetFrameworks>
+    <IsTestProject>true</IsTestProject>
     <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.4" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  <!-- NetWasm.TUnit 0.10.6 is built from upstream TUnit v1.75.0; the desktop lane pins the same version. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netwasm0.1'">
+    <PackageReference Include="NetWasm.TUnit" Version="0.10.6" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+    <PackageReference Include="TUnit" Version="1.75.0" />
   </ItemGroup>
 
+  <!-- The workbench route's reorder math is plain C#, tested here without the route. -->
   <ItemGroup>
-    <Using Include="Xunit" />
+    <Compile Include="..\..\demo\AdvancedControls\Reorder\ReorderDemoLogic.cs" Link="Demo\ReorderDemoLogic.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FuiCs\FuiCs.csproj" />
+    <ProjectReference Include="..\..\src\FuiCs.Worker\FuiCs.Worker.csproj" />
+    <ProjectReference Include="..\..\demo\DesignSystem\FuiCs.Demo.DesignSystem.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,11 +1,19 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "baseUrl": ".",
+    "lib": ["ES2022", "DOM"],
     "strict": true,
     "noEmit": true,
-    "types": ["node", "@playwright/test"]
+    "allowImportingTsExtensions": true,
+    "types": ["node", "@playwright/test"],
+    "paths": {
+      "@effindomv2/runtime": ["../browser-bridge/src/index.ts", "../../node_modules/@effindomv2/runtime/src/index.ts"],
+      "@effindomv2/runtime/*": ["../browser-bridge/src/*", "../../node_modules/@effindomv2/runtime/src/*"]
+    },
+    "skipLibCheck": true
   },
-  "include": ["browser/**/*.ts", "tests/**/*.ts", "playwright.config.ts"]
+  "include": ["browser/**/*.ts", "browser-app/**/*.ts", "browser-worker/**/*.ts", "demo/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "playwright.config.ts", "playwright.package.config.ts"]
 }

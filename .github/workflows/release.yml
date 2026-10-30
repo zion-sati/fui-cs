@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    outputs:
+      release_version: ${{ steps.version.outputs.release_version }}
+    steps:
+      - name: Validate release tag
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          release_version="${RELEASE_TAG#v}"
+          if [[ "$RELEASE_TAG" != v* || ! "$release_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tags are v<semver>: $RELEASE_TAG" >&2
+            exit 1
+          fi
+          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
+
+  verify_ci:
+    needs: validate
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      fui_cs_ci_run_id: ${{ steps.attestation.outputs.fui_cs_ci_run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+      - name: Verify the release commit is merged to main
+        id: release_commit
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Verify FUI-CS CI attestation
+        id: attestation
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ steps.release_commit.outputs.sha }}
+        run: node scripts/ci/verify-fui-cs-release-attestation.mjs
+
+  publish:
+    needs: [validate, verify_ci]
+    runs-on: ubuntu-24.04
+    # The nuget.org trusted publishing policy issues a key only to jobs in this environment.
+    environment: nuget-release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Install committed dependencies
+        run: npm ci
+      - name: Pack FUI-CS
+        id: package
+        env:
+          RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}
+        run: |
+          bash v2/fui-cs/scripts/pack.sh --version "$RELEASE_VERSION"
+          runtime_version="$(node -p "require('./node_modules/@effindomv2/runtime/package.json').version")"
+          for package in "FuiCs.$RELEASE_VERSION" "FuiCs.Worker.$RELEASE_VERSION" "FuiCs.Templates.$RELEASE_VERSION" \
+            "FuiCs.Runtime.$runtime_version"; do
+            test -f "v2/fui-cs/build/packages/$package.nupkg"
+          done
+          echo "runtime_version=$runtime_version" >> "$GITHUB_OUTPUT"
+      - name: Sign in to NuGet
+        id: nuget
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+      # FuiCs.Runtime carries the EffinDOM runtime at that runtime's version, so a release with an unchanged runtime
+      # finds it already published.
+      - name: Publish to NuGet
+        env:
+          NUGET_API_KEY: ${{ steps.nuget.outputs.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push "v2/fui-cs/build/packages/*.nupkg" --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Report release
+        run: |
+          {
+            echo '## FUI-CS released'
+            echo
+            echo "Packages: FuiCs, FuiCs.Worker and FuiCs.Templates ${{ needs.validate.outputs.release_version }}"
+            echo "FuiCs.Runtime: ${{ steps.package.outputs.runtime_version }}"
+            echo "Verified FUI-CS CI run: ${{ needs.verify_ci.outputs.fui_cs_ci_run_id }}"
+          } >> "$GITHUB_STEP_SUMMARY"

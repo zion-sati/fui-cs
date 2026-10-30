@@ -1,0 +1,25 @@
+<Project Sdk="NetWasm.Sdk">
+
+  <!-- The demo's templated controls route: an application of its own, loaded by the demo shell for /v2/fui-cs/demo/templated-controls/. -->
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>page</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FuiCs.Demo.TemplatedControls</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FuiCs\FuiCs.csproj" />
+    <ProjectReference Include="..\DesignSystem\FuiCs.Demo.DesignSystem.csproj" />
+  </ItemGroup>
+
+  <!-- The shell's host services and events, generated into Host/ when the project builds. -->
+  <ItemGroup>
+    <FuiCsHostServices Include="../host/host-services.ts" Definition="demoHostServices" CSharp="Host/DemoShell.HostServices.g.cs" Module="Host/demo_host_services.g.ts" />
+    <FuiCsHostEvents Include="../host/host-events.ts" Definition="demoHostEvents" CSharp="Host/DemoShell.HostEvents.g.cs" />
+  </ItemGroup>
+
+</Project>

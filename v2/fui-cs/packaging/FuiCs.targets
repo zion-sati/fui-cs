@@ -1,0 +1,8 @@
+<Project>
+
+  <!-- buildTransitive/FuiCs.targets in the FuiCs package: the application's exports and entry, and the web shell it
+       publishes with. -->
+  <Import Project="$(MSBuildThisFileDirectory)FuiCs.Exports.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)FuiCs.Web.targets" />
+
+</Project>

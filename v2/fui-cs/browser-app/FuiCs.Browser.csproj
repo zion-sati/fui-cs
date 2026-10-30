@@ -1,19 +1,59 @@
-<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <InvariantGlobalization>true</InvariantGlobalization>
-    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
-    <PublishTrimmed>true</PublishTrimmed>
-    <RunAOTCompilation>false</RunAOTCompilation>
-    <WasmInitialHeapSize>33554432</WasmInitialHeapSize>
-  </PropertyGroup>
+<Project Sdk="NetWasm.Sdk">
 
-  <ItemGroup>
-    <StaticWebAssetFingerprintPattern Include="JS" Pattern="*.js" Expression="#[.{fingerprint}]!" />
-  </ItemGroup>
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>page</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\src\FuiCs\FuiCs.csproj" />
   </ItemGroup>
+
+  <!-- The design-system test page renders a route page from the demo's design system. -->
+  <ItemGroup Condition="'$(FuiCsSmokeOnly)' != 'true'">
+    <ProjectReference Include="..\demo\DesignSystem\FuiCs.Demo.DesignSystem.csproj" />
+  </ItemGroup>
+
+  <!-- The browser tests drive input through the harness debug API; the measured smoke build leaves it out. -->
+  <PropertyGroup Condition="'$(FuiCsSmokeOnly)' != 'true'">
+    <FuiCsDebugExports>true</FuiCsDebugExports>
+  </PropertyGroup>
+
+  <!-- -p:FuiCsSmokeOnly=true builds only the smoke page, the app scripts/measure-size.sh tracks. -->
+  <PropertyGroup Condition="'$(FuiCsSmokeOnly)' == 'true'">
+    <DefineConstants>$(DefineConstants);SMOKE_ONLY</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(FuiCsSmokeOnly)' == 'true'">
+    <Compile Remove="Pages/**" />
+    <Compile Include="Pages/SmokePage.cs" />
+  </ItemGroup>
+
+  <!-- The host page's probe services and events, which send and receive every host-service type, generated into
+       Pages/Host/ when the project builds. -->
+  <ItemGroup Condition="'$(FuiCsSmokeOnly)' != 'true'">
+    <FuiCsHostServices Include="../browser/probe-host.ts" Definition="probeHostServices" CSharp="Pages/Host/Probe.HostServices.g.cs" Module="Pages/Host/probe_host_services.g.ts" />
+    <FuiCsHostEvents Include="../browser/probe-host.ts" Definition="probeHostEvents" CSharp="Pages/Host/Probe.HostEvents.g.cs" />
+  </ItemGroup>
+
+  <!-- The worker test page's worker publishes with the page, into browser/workers/FuiCs.TestWorker/, where it shares
+       the page's copy of the NetWasm runtime. -->
+  <ItemGroup Condition="'$(FuiCsSmokeOnly)' != 'true'">
+    <ProjectReference Include="..\browser-worker\FuiCs.TestWorker.csproj" NetWasmWorker="true" />
+  </ItemGroup>
+
+  <!-- dotnet publish writes the test pages to public/v2/fui-cs/ with the smoke harness and the runtime. -->
+  <PropertyGroup>
+    <PublishDir>$(FuiCsPublicDirectory)v2/fui-cs/</PublishDir>
+    <FuiCsHarness>../browser/smoke-harness.ts</FuiCsHarness>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="index.html" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="assets/**" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

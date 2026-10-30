@@ -1,0 +1,28 @@
+<Project Sdk="NetWasm.Sdk/{NETWASM_SDK_VERSION}">
+
+  <!-- The application's home route, and the site: dotnet publish -c Release -o site writes every route to site/,
+       each into the folder its path names. -->
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>page</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>FuiRoutedApp</RootNamespace>
+    <FuiCsHomeTitle>Home</FuiCsHomeTitle>
+    <!-- The other routes and the shared library are projects of their own. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);Routes/**;Shared/**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FuiCs" Version="{FUICS_VERSION}" />
+    <ProjectReference Include="Shared/FuiRoutedApp.Shared.csproj" />
+  </ItemGroup>
+
+  <!-- The other routes: add a project under Routes/ and list it here, with the path in Shared/Site.cs. -->
+  <ItemGroup>
+    <FuiCsRoute Include="Routes/Settings/FuiRoutedApp.Settings.csproj" RoutePath="/settings/" Title="Settings" />
+  </ItemGroup>
+
+</Project>

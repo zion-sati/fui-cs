@@ -1,0 +1,23 @@
+<Project Sdk="NetWasm.Sdk">
+
+  <!-- The demo's immediate drawing route: an application of its own, loaded by the demo shell for /v2/fui-cs/demo/immediate-drawing/. -->
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>page</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FuiCs.Demo.ImmediateDrawing</RootNamespace>
+  </PropertyGroup>
+
+  <!-- The shell raises its events in every route, so each route generates them into Host/ when it builds. -->
+  <ItemGroup>
+    <FuiCsHostEvents Include="../host/host-events.ts" Definition="demoHostEvents" CSharp="Host/DemoShell.HostEvents.g.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FuiCs\FuiCs.csproj" />
+  </ItemGroup>
+
+</Project>

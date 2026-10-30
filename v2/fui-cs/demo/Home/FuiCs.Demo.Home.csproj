@@ -1,0 +1,46 @@
+<Project Sdk="NetWasm.Sdk">
+
+  <!-- The demo's dashboard route, and the demo site: dotnet publish writes every route, the shell harness and its page
+       to public/v2/fui-cs/demo/ (or, with -p:FuiCsRouteBase=/ -o <folder>, a site served at its root). -->
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>page</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FuiCs.Demo.Home</RootNamespace>
+    <PublishDir>$(FuiCsPublicDirectory)v2/fui-cs/demo/</PublishDir>
+    <FuiCsRouteBase>/v2/fui-cs/demo/</FuiCsRouteBase>
+    <FuiCsHomeTitle>Dashboard</FuiCsHomeTitle>
+    <FuiCsHarness>../harness.ts</FuiCsHarness>
+    <FuiCsPage>../index.html</FuiCsPage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FuiCsRoute Include="../Workbench/FuiCs.Demo.Workbench.csproj" RoutePath="/workbench/" Title="Workbench" />
+    <FuiCsRoute Include="../ImmediateDrawing/FuiCs.Demo.ImmediateDrawing.csproj" RoutePath="/immediate-drawing/" Title="Immediate-mode drawing" />
+    <FuiCsRoute Include="../ScrollbarGutter/FuiCs.Demo.ScrollbarGutter.csproj" RoutePath="/scrollbar-gutter/" Title="Scrollbar gutter bug" />
+    <FuiCsRoute Include="../TemplatedControls/FuiCs.Demo.TemplatedControls.csproj" RoutePath="/templated-controls/" Title="Templated controls" />
+    <FuiCsRoute Include="../AdvancedControls/FuiCs.Demo.AdvancedControls.csproj" RoutePath="/advanced-controls/" Title="Advanced controls" />
+  </ItemGroup>
+
+  <!-- The dashboard's textures, which it loads from the demo's root (its own route path), and DejaVu Sans, with its
+       license, for the advanced controls route's custom-font sample, beside the runtime's fonts. -->
+  <ItemGroup>
+    <Content Include="../demo-texture.png;../demo-secondary-texture.png" Link="%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../assets/fonts/*" Link="fonts/%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FuiCs\FuiCs.csproj" />
+    <ProjectReference Include="..\DesignSystem\FuiCs.Demo.DesignSystem.csproj" />
+  </ItemGroup>
+
+  <!-- The shell's host services and events, generated into Host/ when the project builds. -->
+  <ItemGroup>
+    <FuiCsHostServices Include="../host/host-services.ts" Definition="demoHostServices" CSharp="Host/DemoShell.HostServices.g.cs" Module="Host/demo_host_services.g.ts" />
+    <FuiCsHostEvents Include="../host/host-events.ts" Definition="demoHostEvents" CSharp="Host/DemoShell.HostEvents.g.cs" />
+  </ItemGroup>
+
+</Project>

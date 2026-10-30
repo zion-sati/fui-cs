@@ -1,11 +1,28 @@
 <Solution>
   <Folder Name="/browser-app/">
     <Project Path="browser-app/FuiCs.Browser.csproj" />
+    <Project Path="browser-worker/FuiCs.TestWorker.csproj" />
+  </Folder>
+  <Folder Name="/demo/">
+    <Project Path="demo/DesignSystem/FuiCs.Demo.DesignSystem.csproj" />
+    <Project Path="demo/Home/FuiCs.Demo.Home.csproj" />
+    <Project Path="demo/Workbench/FuiCs.Demo.Workbench.csproj" />
+    <Project Path="demo/ImmediateDrawing/FuiCs.Demo.ImmediateDrawing.csproj" />
+    <Project Path="demo/ScrollbarGutter/FuiCs.Demo.ScrollbarGutter.csproj" />
+    <Project Path="demo/TemplatedControls/FuiCs.Demo.TemplatedControls.csproj" />
+    <Project Path="demo/AdvancedControls/FuiCs.Demo.AdvancedControls.csproj" />
+    <Project Path="demo/AdvancedControlsWorker/FuiCs.Demo.AdvancedControlsWorker.csproj" />
+  </Folder>
+  <Folder Name="/packaging/">
+    <Project Path="packaging/FuiCs.Runtime/FuiCs.Runtime.csproj" />
+    <Project Path="packaging/FuiCs.Templates/FuiCs.Templates.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/FuiCs/FuiCs.csproj" />
+    <Project Path="src/FuiCs.Worker/FuiCs.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FuiCs.Tests/FuiCs.Tests.csproj" />
+    <Project Path="tests/FuiCs.BrowserTests/FuiCs.BrowserTests.csproj" />
   </Folder>
 </Solution>

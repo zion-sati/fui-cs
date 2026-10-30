@@ -1,0 +1,23 @@
+<Project>
+
+  <!-- Where this repository's sites publish: the demo and the test pages go under public/, which the browser tests
+       serve. Defined here so a project can set its PublishDir from it. -->
+  <PropertyGroup>
+    <FuiCsPublicDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..', 'public'))</FuiCsPublicDirectory>
+    <!-- Only the four package projects pack (packaging/Package.props). -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- The EffinDOM runtime, in its package layout: the browser bridge's dist/ in the EffinDOM repository, or the
+       @effindomv2/runtime package standalone (set FuiCsRuntimeDirectory to use another). Sites publish it, and
+       FuiCs.Runtime packs it at its own version, a local one when it is built from source here. -->
+  <PropertyGroup>
+    <_FuiCsRuntimeFromSource Condition="Exists('$(MSBuildThisFileDirectory)../browser-bridge/src/index.ts')">true</_FuiCsRuntimeFromSource>
+    <FuiCsRuntimeDirectory Condition="'$(FuiCsRuntimeDirectory)' == '' AND '$(_FuiCsRuntimeFromSource)' == 'true'">$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', 'browser-bridge', 'dist'))</FuiCsRuntimeDirectory>
+    <FuiCsRuntimeDirectory Condition="'$(FuiCsRuntimeDirectory)' == ''">$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..', 'node_modules', '@effindomv2', 'runtime', 'dist'))</FuiCsRuntimeDirectory>
+    <FuiCsRuntimeDirectory>$([MSBuild]::EnsureTrailingSlash('$(FuiCsRuntimeDirectory)'))</FuiCsRuntimeDirectory>
+    <FuiCsRuntimeVersion Condition="'$(FuiCsRuntimeVersion)' == '' AND Exists('$(FuiCsRuntimeDirectory)../package.json')">$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText('$(FuiCsRuntimeDirectory)../package.json')), '(?s)^.*?"version"\s*:\s*"([^"]+)".*$', '$1'))</FuiCsRuntimeVersion>
+    <FuiCsRuntimeVersion Condition="'$(_FuiCsRuntimeFromSource)' == 'true' AND '$(FuiCsRuntimeVersion)' != '' AND !$(FuiCsRuntimeVersion.EndsWith('-local'))">$(FuiCsRuntimeVersion)-local</FuiCsRuntimeVersion>
+  </PropertyGroup>
+
+</Project>

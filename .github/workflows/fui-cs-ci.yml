@@ -1,0 +1,56 @@
+name: FUI-CS CI
+
+on:
+  push:
+    branches: [main]
+    paths: &fui_cs_ci_inputs
+      - '.github/workflows/fui-cs-ci.yml'
+      - 'FuiCs.slnx'
+      - 'global.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'update-deps.sh'
+      - 'scripts/ci/**'
+      - 'v2/abi/**'
+      - 'v2/core/include/**'
+      - 'v2/ui/include/**'
+      - 'v2/hostgen/**'
+      - 'v2/fui-cs/**'
+      - 'docs/v2/fui-cs/**'
+  pull_request:
+    paths: *fui_cs_ci_inputs
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            v2/fui-cs/package-lock.json
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - name: Install committed dependencies
+        run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build, failing on an out-of-date generated file
+        run: dotnet build FuiCs.slnx -p:FuiCsCheckGenerated=true
+      - name: Typecheck
+        run: npm --prefix v2/fui-cs run typecheck
+      - name: Check the API reference and the guides' examples
+        run: |
+          npm --prefix v2/fui-cs run check:docs
+          npm --prefix v2/fui-cs run check:examples
+      - name: Unit and browser tests
+        run: dotnet test FuiCs.slnx
+      - name: Package tests
+        run: dotnet test v2/fui-cs/tests/FuiCs.PackageTests

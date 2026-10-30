@@ -1,0 +1,119 @@
+<Project>
+
+  <!-- What each fui-cs package carries beside its build output, staged when it packs (packaging/Package.props imports
+       this file). A package project names its kind:
+
+         sdk        FuiCs: the application targets and sources, the JSImport page modules and the web shell (the
+                    prebuilt harnesses and pages);
+         worker     FuiCs.Worker: the worker targets and source and the worker's JSImport module;
+         runtime    FuiCs.Runtime: the EffinDOM runtime (FuiCsRuntimeDirectory, without symbols and source maps) and
+                    the props that tell FuiCs where it is;
+         templates  FuiCs.Templates: the dotnet new templates, with the versions an application builds with. -->
+
+  <UsingTask TaskName="FuiCsCopyWithReplacements" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <SourceDirectory ParameterType="System.String" Required="true" />
+      <DestinationDirectory ParameterType="System.String" Required="true" />
+      <Replacements ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <TextExtensions ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        // The task compiles against .NET Standard 2.0.
+        var textExtensions = new System.Collections.Generic.HashSet<string>(TextExtensions.Split(';').Select(extension => extension.Trim()), StringComparer.OrdinalIgnoreCase);
+        var sourceRoot = Path.GetFullPath(SourceDirectory).TrimEnd('/', '\\') + Path.DirectorySeparatorChar;
+        if (Directory.Exists(DestinationDirectory)) Directory.Delete(DestinationDirectory, true);
+        foreach (var source in Directory.EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories))
+        {
+            var destination = Path.Combine(DestinationDirectory, Path.GetFullPath(source).Substring(sourceRoot.Length));
+            Directory.CreateDirectory(Path.GetDirectoryName(destination));
+            if (textExtensions.Contains(Path.GetExtension(source)))
+            {
+                var text = File.ReadAllText(source);
+                foreach (var replacement in Replacements) text = text.Replace(replacement.ItemSpec, replacement.GetMetadata("Value"));
+                File.WriteAllText(destination, text);
+            }
+            else
+            {
+                File.Copy(source, destination);
+            }
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <PropertyGroup>
+    <_FuiCsPackageStaging>$(IntermediateOutputPath)fuics-package/</_FuiCsPackageStaging>
+    <_FuiCsRepositoryDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..'))</_FuiCsRepositoryDirectory>
+  </PropertyGroup>
+
+  <Target Name="FuiCsStagePackageContent" BeforeTargets="_GetPackageFiles" DependsOnTargets="_FuiCsStageSdk;_FuiCsStageWorker;_FuiCsStageRuntime;_FuiCsStageTemplates" />
+
+  <Target Name="_FuiCsStageSdk" Condition="'$(FuiCsPackageKind)' == 'sdk'">
+    <RemoveDir Directories="$(_FuiCsPackageStaging)" />
+    <Exec WorkingDirectory="$(_FuiCsRepositoryDirectory)"
+          Command="npx --no-install esbuild browser/app-harness.ts --bundle --format=esm --platform=browser --target=es2022 --minify --log-level=warning $(FuiCsHarnessEsbuildArguments) --outfile=&quot;$(MSBuildProjectDirectory)/$(_FuiCsPackageStaging)shell/harness.js&quot;" />
+    <Exec WorkingDirectory="$(_FuiCsRepositoryDirectory)"
+          Command="npx --no-install esbuild browser/routed-app-harness.ts --bundle --format=esm --platform=browser --target=es2022 --minify --log-level=warning $(FuiCsHarnessEsbuildArguments) --outfile=&quot;$(MSBuildProjectDirectory)/$(_FuiCsPackageStaging)shell/routed-harness.js&quot;" />
+    <Copy SourceFiles="$(_FuiCsRepositoryDirectory)packaging/shell/index.html;$(_FuiCsRepositoryDirectory)packaging/shell/routed-index.html" DestinationFolder="$(_FuiCsPackageStaging)shell/" />
+    <ItemGroup>
+      <None Include="$(_FuiCsPackageStaging)shell/*" Pack="true" PackagePath="buildTransitive/shell" />
+      <None Include="$(_FuiCsRepositoryDirectory)build/imports/*.mjs" Pack="true" PackagePath="buildTransitive/js" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_FuiCsStageWorker" Condition="'$(FuiCsPackageKind)' == 'worker'">
+    <ItemGroup>
+      <None Include="$(_FuiCsRepositoryDirectory)build/worker-imports/fui_worker_host.mjs" Pack="true" PackagePath="buildTransitive/js" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_FuiCsStageRuntime" Condition="'$(FuiCsPackageKind)' == 'runtime'">
+    <Error Condition="!Exists('$(FuiCsRuntimeDirectory)effindom.v2.manifest.json')"
+           Text="No EffinDOM runtime at '$(FuiCsRuntimeDirectory)': build the browser bridge, or restore @effindomv2/runtime, or set FuiCsRuntimeDirectory to an @effindomv2/runtime dist folder." />
+    <PropertyGroup>
+      <_FuiCsRuntimeSetHash>$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText('$(FuiCsRuntimeDirectory)effindom.v2.manifest.json')), '(?s).*"runtime_set_hash"\s*:\s*"([^"]+)".*', '$1'))</_FuiCsRuntimeSetHash>
+    </PropertyGroup>
+    <ItemGroup>
+      <_FuiCsRuntimeFile Include="$(FuiCsRuntimeDirectory)bridge.js;$(FuiCsRuntimeDirectory)effindom.v2.manifest.json" />
+      <_FuiCsRuntimeFile Include="$(FuiCsRuntimeDirectory)runtime/**/*" Exclude="$(FuiCsRuntimeDirectory)runtime/**/*.symbols;$(FuiCsRuntimeDirectory)runtime/**/*.map" Folder="runtime/" />
+      <_FuiCsRuntimeFile Include="$(FuiCsRuntimeDirectory)fonts/**/*" Folder="fonts/" />
+      <_FuiCsRuntimePropsLine Include="&lt;Project&gt;" />
+      <_FuiCsRuntimePropsLine Include="%20%20&lt;!-- The EffinDOM runtime this package carries. --&gt;" />
+      <_FuiCsRuntimePropsLine Include="%20%20&lt;PropertyGroup&gt;" />
+      <_FuiCsRuntimePropsLine Include="%20%20%20%20&lt;FuiCsRuntimeVersion&gt;$(Version)&lt;/FuiCsRuntimeVersion&gt;" />
+      <_FuiCsRuntimePropsLine Include="%20%20%20%20&lt;FuiCsRuntimeSetHash&gt;$(_FuiCsRuntimeSetHash)&lt;/FuiCsRuntimeSetHash&gt;" />
+      <_FuiCsRuntimePropsLine Include="%20%20%20%20&lt;FuiCsRuntimeDirectory&gt;%24(MSBuildThisFileDirectory)../runtime/&lt;/FuiCsRuntimeDirectory&gt;" />
+      <_FuiCsRuntimePropsLine Include="%20%20&lt;/PropertyGroup&gt;" />
+      <_FuiCsRuntimePropsLine Include="&lt;/Project&gt;" />
+    </ItemGroup>
+    <RemoveDir Directories="$(_FuiCsPackageStaging)" />
+    <Copy SourceFiles="@(_FuiCsRuntimeFile)" DestinationFiles="@(_FuiCsRuntimeFile->'$(_FuiCsPackageStaging)runtime/%(Folder)%(RecursiveDir)%(Filename)%(Extension)')" />
+    <WriteLinesToFile File="$(_FuiCsPackageStaging)FuiCs.Runtime.props" Lines="@(_FuiCsRuntimePropsLine)" Overwrite="true" />
+    <ItemGroup>
+      <None Include="$(_FuiCsPackageStaging)runtime/**" Pack="true" PackagePath="runtime/%(RecursiveDir)" />
+      <None Include="$(_FuiCsPackageStaging)FuiCs.Runtime.props" Pack="true" PackagePath="buildTransitive" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="_FuiCsStageTemplates" Condition="'$(FuiCsPackageKind)' == 'templates'">
+    <PropertyGroup>
+      <_FuiCsGlobalJson>$([System.IO.File]::ReadAllText('$(_FuiCsRepositoryDirectory)global.json'))</_FuiCsGlobalJson>
+      <_FuiCsDotnetSdkVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_FuiCsGlobalJson)', '(?s).*"sdk"\s*:\s*\{[^}]*"version"\s*:\s*"([^"]+)".*', '$1'))</_FuiCsDotnetSdkVersion>
+      <_FuiCsNetWasmSdkVersion>$([System.Text.RegularExpressions.Regex]::Replace('$(_FuiCsGlobalJson)', '(?s).*"NetWasm\.Sdk"\s*:\s*"([^"]+)".*', '$1'))</_FuiCsNetWasmSdkVersion>
+    </PropertyGroup>
+    <ItemGroup>
+      <_FuiCsTemplateReplacement Include="{FUICS_VERSION}" Value="$(Version)" />
+      <_FuiCsTemplateReplacement Include="{NETWASM_SDK_VERSION}" Value="$(_FuiCsNetWasmSdkVersion)" />
+      <_FuiCsTemplateReplacement Include="{DOTNET_SDK_VERSION}" Value="$(_FuiCsDotnetSdkVersion)" />
+    </ItemGroup>
+    <FuiCsCopyWithReplacements SourceDirectory="$(MSBuildProjectDirectory)/content" DestinationDirectory="$(MSBuildProjectDirectory)/$(_FuiCsPackageStaging)content"
+                               Replacements="@(_FuiCsTemplateReplacement)" TextExtensions=".csproj;.json;.cs;.md" />
+    <ItemGroup>
+      <None Include="$(_FuiCsPackageStaging)content/**" Pack="true" PackagePath="content/%(RecursiveDir)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

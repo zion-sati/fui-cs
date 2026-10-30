@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FuiCs demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* The theme's background, so the page does not flash another color before the first frame. */
+    html { color-scheme: light dark; }
+    html, body { height: 100%; overflow: hidden; background: #f8fafc; }
+    @media (prefers-color-scheme: dark) { html, body { background: #040a14; } }
+    .canvas-shell { position: relative; width: 100vw; height: 100vh; }
+    canvas { display: block; width: 100%; height: 100%; outline: none; }
+    canvas:focus, canvas:focus-visible { outline: none; }
+  </style>
+</head>
+<body>
+  <!-- Every route serves this page; the shell loads the route's application. -->
+  <div class="canvas-shell" data-effindom-canvas-size-source>
+    <canvas id="fui-canvas"></canvas>
+  </div>
+  <!-- Publishing writes this page at the demo's root and in every route's folder, so it loads the shell from the
+       demo's base; a route's own relative addresses (its assets) resolve from its folder. -->
+  <script src="__FUICS_ROUTE_BASE__fui-app.js"></script>
+  <script src="__FUICS_ROUTE_BASE__bridge.js"></script>
+  <script type="module" src="__FUICS_ROUTE_BASE__harness.js"></script>
+</body>
+</html>

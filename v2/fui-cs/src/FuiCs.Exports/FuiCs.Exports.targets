@@ -1,0 +1,92 @@
+<Project>
+
+  <!-- The host-facing exports, the JSImport ABI and the entry point are compiled into each FuiCs application
+       (every raw-wasm JsModule or browser project): the generated entry names the application's own FuiProgram,
+       and the JSImport modules declared here are bundled into the application's page runtime. The FuiCs package
+       ships this file as buildTransitive/FuiCs.targets; in this repository Directory.Build.targets imports it.
+
+       The application provides its page by convention:
+
+         static class FuiProgram
+         {
+             public static IApplication CreateApplication() => Application.Create(BuildPage);
+         }
+
+       in its root namespace. Set FuiProgramType to the full name of another class to use that instead. -->
+  <!-- FuiCsDebugExports adds the input-injection exports the harness debug API uses; on by default in Debug builds. -->
+  <PropertyGroup>
+    <FuiCsDebugExports Condition="'$(FuiCsDebugExports)' == '' AND '$(Configuration)' == 'Debug'">true</FuiCsDebugExports>
+    <DefineConstants Condition="'$(FuiCsDebugExports)' == 'true'">$(DefineConstants);FUICS_DEBUG_EXPORTS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- A worker project (NetWasmJavaScriptHosts=worker) is not an application: FuiCs.Worker.Exports.targets gives it
+       the worker exports and entry. -->
+  <PropertyGroup>
+    <_FuiCsIsApplication Condition="'$(TargetFramework)' == 'netwasm0.1' AND '$(NetWasmRawWasm)' == 'true' AND '$(IsTestProject)' != 'true' AND '$(NetWasmJavaScriptHosts)' != 'worker'">true</_FuiCsIsApplication>
+    <!-- The prebuilt JSImport page modules: the package's js/ folder, or build/imports/ in the repository. -->
+    <FuiCsJavaScriptModulesDirectory Condition="'$(FuiCsJavaScriptModulesDirectory)' == ''">$(MSBuildThisFileDirectory)js/</FuiCsJavaScriptModulesDirectory>
+  </PropertyGroup>
+
+  <!-- The JSImport page modules, generated from the ABI when the repository builds (build-support/FuiCs.JavaScript.proj). -->
+  <Import Project="$(MSBuildThisFileDirectory)JsModules.g.props" Condition="'$(_FuiCsIsApplication)' == 'true'" />
+
+  <ItemGroup Condition="'$(_FuiCsIsApplication)' == 'true'">
+    <Compile Include="$(MSBuildThisFileDirectory)HostExports.cs" Link="FuiCs\HostExports.cs" Visible="false" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsImportFuiAbi.g.cs" Link="FuiCs\JsImportFuiAbi.g.cs" Visible="false" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsImportFuiAbi.HandWritten.cs" Link="FuiCs\JsImportFuiAbi.HandWritten.cs" Visible="false" />
+  </ItemGroup>
+
+  <!-- JavaScript modules a referenced library declares. NetWasm bundles only the application's own
+       NetWasmJavaScriptModule items, so a library whose [JSImport]s name a module of its own (a routed site's shared
+       project, for one) has the module carried into every application that references it, directly or through
+       another library; a module an application does not call is left out of its bundle. A worker project's modules
+       are its own, so worker references are skipped. -->
+  <PropertyGroup>
+    <_FuiCsReferenceRemoveProperties>OutputType;PublishDir;NetWasmWorkerPublishDir;NetWasmRawWasm;NoBuild;RuntimeIdentifier;SelfContained</_FuiCsReferenceRemoveProperties>
+  </PropertyGroup>
+
+  <Target Name="FuiCsGetJavaScriptModules" Returns="@(_FuiCsDeclaredJavaScriptModule)">
+    <MSBuild Projects="@(ProjectReference)" Condition="'%(ProjectReference.NetWasmWorker)' != 'true'"
+             Targets="FuiCsGetJavaScriptModules" SkipNonexistentTargets="true"
+             Properties="Configuration=$(Configuration)" RemoveProperties="$(_FuiCsReferenceRemoveProperties)">
+      <Output TaskParameter="TargetOutputs" ItemName="_FuiCsDeclaredJavaScriptModule" />
+    </MSBuild>
+    <ItemGroup>
+      <_FuiCsDeclaredJavaScriptModule Include="@(NetWasmJavaScriptModule->'%(FullPath)')" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="FuiCsAddReferencedJavaScriptModules" BeforeTargets="NetWasmWriteCompilationIdentity;CoreCompile"
+          Condition="'$(_FuiCsIsApplication)' == 'true' AND '$(DesignTimeBuild)' != 'true'">
+    <MSBuild Projects="@(ProjectReference)" Condition="'%(ProjectReference.NetWasmWorker)' != 'true'"
+             Targets="FuiCsGetJavaScriptModules" SkipNonexistentTargets="true"
+             Properties="Configuration=$(Configuration)" RemoveProperties="$(_FuiCsReferenceRemoveProperties)">
+      <Output TaskParameter="TargetOutputs" ItemName="_FuiCsReferencedJavaScriptModule" />
+    </MSBuild>
+    <ItemGroup>
+      <!-- A module the application declares itself, or one the FuiCs package supplies, stays as declared. -->
+      <_FuiCsReferencedJavaScriptModule Remove="@(NetWasmJavaScriptModule)" MatchOnMetadata="Module" />
+      <NetWasmJavaScriptModule Include="@(_FuiCsReferencedJavaScriptModule->Distinct())" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="FuiCsGenerateEntry" BeforeTargets="CoreCompile" Condition="'$(_FuiCsIsApplication)' == 'true'">
+    <PropertyGroup>
+      <_FuiProgramType>$(FuiProgramType)</_FuiProgramType>
+      <_FuiProgramType Condition="'$(_FuiProgramType)' == '' AND '$(RootNamespace)' != ''">$(RootNamespace).FuiProgram</_FuiProgramType>
+      <_FuiProgramType Condition="'$(_FuiProgramType)' == ''">FuiProgram</_FuiProgramType>
+      <_FuiCsEntryPath>$(IntermediateOutputPath)FuiCs.Entry.g.cs</_FuiCsEntryPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <_FuiCsEntryLine Include="// &lt;auto-generated/&gt; FuiCs application entry, written by FuiCs.Exports.targets. The application defines $(_FuiProgramType).CreateApplication() (set FuiProgramType to use another class)." />
+      <_FuiCsEntryLine Include="namespace FuiCs.Hosting%3B" />
+      <_FuiCsEntryLine Include="public static partial class HostExports { private static partial IApplication CreateApplication() =&gt; global::$(_FuiProgramType).CreateApplication()%3B }" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_FuiCsEntryPath)" Lines="@(_FuiCsEntryLine)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(_FuiCsEntryPath)" />
+      <FileWrites Include="$(_FuiCsEntryPath)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

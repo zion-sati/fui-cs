@@ -5,6 +5,7 @@ import * as path from 'node:path';
 const MIME_TYPES: Readonly<Record<string, string>> = {
   '.html': 'text/html',
   '.js': 'application/javascript',
+  '.mjs': 'application/javascript',
   '.json': 'application/json',
   '.png': 'image/png',
   '.wasm': 'application/wasm',
@@ -20,7 +21,7 @@ function createServer(rootDir: string): http.Server {
 
   return http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     const urlPath = (req.url ?? '/').split('?')[0] ?? '/';
-    const requestedPath = urlPath === '/' ? '/index.html' : urlPath;
+    const requestedPath = urlPath.endsWith('/') ? `${urlPath}index.html` : urlPath;
     const filePath = path.resolve(resolvedRoot, `.${requestedPath}`);
 
     if (!filePath.startsWith(resolvedRoot)) {
@@ -59,33 +60,25 @@ function closeServer(server: http.Server): Promise<void> {
   });
 }
 
+/** Listens on the first free port from initialPort, so spec files running in parallel each get their own. */
 function reservePort(server: http.Server, host: string, initialPort: number, maxPort: number): Promise<number> {
   return new Promise<number>((resolve, reject) => {
     const tryListen = (candidatePort: number): void => {
-      const probe = http.createServer();
-
-      probe.once('error', (error: NodeJS.ErrnoException) => {
+      const onError = (error: NodeJS.ErrnoException): void => {
+        server.off('listening', onListening);
         if ((error.code === 'EADDRINUSE' || error.code === 'EACCES') && candidatePort < maxPort) {
           tryListen(candidatePort + 1);
           return;
         }
         reject(error);
-      });
-
-      probe.once('listening', () => {
-        probe.close((probeError: Error | undefined) => {
-          if (probeError !== undefined) {
-            reject(probeError);
-            return;
-          }
-
-          server.listen(candidatePort, host, () => {
-            resolve(candidatePort);
-          });
-        });
-      });
-
-      probe.listen(candidatePort, host);
+      };
+      const onListening = (): void => {
+        server.off('error', onError);
+        resolve(candidatePort);
+      };
+      server.once('error', onError);
+      server.once('listening', onListening);
+      server.listen(candidatePort, host);
     };
 
     tryListen(initialPort);

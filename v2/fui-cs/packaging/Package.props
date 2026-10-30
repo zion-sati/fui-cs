@@ -1,0 +1,34 @@
+<Project>
+
+  <!-- Metadata shared by the fui-cs packages. dotnet pack in v2/fui-cs packs them into build/packages/: FuiCs, FuiCs.Worker
+       and FuiCs.Templates at FuiCsVersion with a -local suffix, or at the Version a release passes
+       (dotnet pack -p:Version=0.3.0), and FuiCs.Runtime at the runtime's own version. -->
+  <PropertyGroup>
+    <FuiCsVersion>0.3.0</FuiCsVersion>
+    <Version Condition="'$(Version)' == ''">$(FuiCsVersion)-local</Version>
+    <IsPackable>true</IsPackable>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)../build/packages/</PackageOutputPath>
+    <Authors>Zion Sati</Authors>
+    <PackageProjectUrl>https://github.com/zion-sati/fui-cs</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/zion-sati/fui-cs</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>effindom;fui;ui;webassembly;netwasm</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <!-- Packing builds into its own folders, so no assembly built without the path mapping ships. A package carries no
+       machine paths or commit ids: source paths map to /_/, and the informational version and repository metadata
+       name no commit. -->
+  <PropertyGroup Condition="'$(_IsPacking)' == 'true'">
+    <BaseOutputPath>bin/pack/</BaseOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)pack/$(Configuration)/</IntermediateOutputPath>
+    <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))=/_/</PathMap>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <EnableSourceLink>false</EnableSourceLink>
+    <PublishRepositoryUrl>false</PublishRepositoryUrl>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)../build-support/FuiCs.Packaging.targets" />
+
+</Project>

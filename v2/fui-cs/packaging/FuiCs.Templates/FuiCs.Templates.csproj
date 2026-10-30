@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The dotnet new templates for FuiCs applications: content/, staged when it packs with the FuiCs, NetWasm SDK and
+       .NET SDK versions filled in (build-support/FuiCs.Packaging.targets). -->
+  <Import Project="..\Package.props" />
+
+  <PropertyGroup>
+    <PackageType>Template</PackageType>
+    <TargetFramework>net11.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <Description>dotnet new templates for FuiCs applications compiled to WebAssembly with NetWasm: fui-app, one page, and fui-routed-app, a shell with two routes.</Description>
+    <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+    <FuiCsPackageKind>templates</FuiCsPackageKind>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

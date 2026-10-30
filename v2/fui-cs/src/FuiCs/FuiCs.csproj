@@ -1,9 +1,30 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="NetWasm.Sdk">
+
+  <Import Project="..\..\packaging\Package.props" />
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>netwasm0.1;net11.0</TargetFrameworks>
+    <OutputType>Library</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <Description>The C# SDK for EffinDOM: retained nodes and controls, events, theming and drawing, compiled to WebAssembly with NetWasm.</Description>
+    <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+    <FuiCsPackageKind>sdk</FuiCsPackageKind>
   </PropertyGroup>
+
+  <!-- What the FuiCs package adds beside the library: the application targets and their sources, and the runtime package
+       it publishes with, which packing references as a project so the package depends on it. The JSImport page modules
+       and the web shell are staged when it packs (build-support/FuiCs.Packaging.targets). -->
+  <ItemGroup Condition="'$(_IsPacking)' == 'true'">
+    <ProjectReference Include="..\..\packaging\FuiCs.Runtime\FuiCs.Runtime.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\packaging\FuiCs\README.md" Pack="true" PackagePath="" />
+    <None Include="..\..\packaging\FuiCs.targets;..\..\packaging\FuiCs.Web.targets" Pack="true" PackagePath="buildTransitive" />
+    <None Include="..\FuiCs.Exports\FuiCs.Exports.targets;..\FuiCs.Exports\JsModules.g.props" Pack="true" PackagePath="buildTransitive" />
+    <None Include="..\FuiCs.Exports\HostExports.cs;..\FuiCs.Exports\JsImportFuiAbi.g.cs;..\FuiCs.Exports\JsImportFuiAbi.HandWritten.cs" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
 
 </Project>

@@ -1,0 +1,17 @@
+<Project Sdk="NetWasm.Sdk">
+
+  <!-- The demo's design system: the theme, surfaces, text, scroll bars, controls and route page every demo route
+       builds on. It targets desktop .NET too, so the unit tests cover its recipes. -->
+  <PropertyGroup>
+    <TargetFrameworks>netwasm0.1;net11.0</TargetFrameworks>
+    <OutputType>Library</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FuiCs.Demo.DesignSystem</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FuiCs\FuiCs.csproj" />
+  </ItemGroup>
+
+</Project>

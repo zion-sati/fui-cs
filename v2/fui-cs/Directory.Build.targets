@@ -1,0 +1,75 @@
+<Project>
+
+  <!-- Every library exposes its internals to its test project, named <AssemblyName>.Tests by convention.
+       This lives in a .targets file because AssemblyName is not defined yet when .props files are read. -->
+  <ItemGroup Condition="'$(IsTestProject)' != 'true'">
+    <InternalsVisibleTo Include="$(AssemblyName).Tests" />
+  </ItemGroup>
+
+  <!-- What the FuiCs and FuiCs.Worker packages add to an application or worker: the host-facing exports, with the
+       JSImport modules scripts/build.sh bundles into build/. -->
+  <PropertyGroup>
+    <FuiCsJavaScriptModulesDirectory>$(MSBuildThisFileDirectory)build/imports/</FuiCsJavaScriptModulesDirectory>
+    <FuiCsWorkerJavaScriptModulesDirectory>$(MSBuildThisFileDirectory)build/worker-imports/</FuiCsWorkerJavaScriptModulesDirectory>
+  </PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)src/FuiCs.Exports/FuiCs.Exports.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)src/FuiCs.Exports/FuiCs.Worker.Exports.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)build-support/DesktopTUnit.targets" Condition="'$(IsTestProject)' == 'true' AND '$(TargetFramework)' == 'net11.0'" />
+
+  <!-- Publishing an application here makes a static site as a packaged application's publish does (the FuiCs package's
+       web targets), with the EffinDOM runtime Directory.Build.props names. The demo and the test pages publish into
+       public/. -->
+  <PropertyGroup>
+    <!-- The repository has no prebuilt shell harnesses (scripts/pack.sh bundles them for the package): a site bundles
+         them from source. -->
+    <_FuiCsAppHarnessSource>$(MSBuildThisFileDirectory)browser/app-harness.ts</_FuiCsAppHarnessSource>
+    <_FuiCsRoutedHarnessSource>$(MSBuildThisFileDirectory)browser/routed-app-harness.ts</_FuiCsRoutedHarnessSource>
+    <FuiCsHarnessEsbuildArguments Condition="'$(_FuiCsRuntimeFromSource)' == 'true'">--alias:@effindomv2/runtime=$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'browser-bridge', 'src'))</FuiCsHarnessEsbuildArguments>
+  </PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)packaging/FuiCs.Web.targets" />
+
+  <!-- The JavaScript side of the build (build-support/FuiCs.JavaScript.proj) runs before every project here builds. The global
+       properties that differ between the projects asking for it are removed, so MSBuild runs it once per build. -->
+  <PropertyGroup>
+    <_FuiCsJavaScriptProject>$(MSBuildThisFileDirectory)build-support/FuiCs.JavaScript.proj</_FuiCsJavaScriptProject>
+    <_FuiCsRuntimeAlias Condition="Exists('$(MSBuildThisFileDirectory)../browser-bridge/src/index.ts')">--alias:@effindomv2/runtime=$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', '..', 'browser-bridge', 'src'))</_FuiCsRuntimeAlias>
+    <_FuiCsHostModuleDirectory>$(IntermediateOutputPath)fuics-host/</_FuiCsHostModuleDirectory>
+  </PropertyGroup>
+
+  <Target Name="FuiCsJavaScript" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+    <MSBuild Projects="$(_FuiCsJavaScriptProject)" Targets="Build"
+             RemoveProperties="TargetFramework;TargetFrameworks;RuntimeIdentifier;Platform;OutDir;OutputPath;IntermediateOutputPath;PublishDir;_CommandLineDefinedOutputPath;MSBuildRestoreSessionId;SelfContained;Version;FuiCsWebShell;RestoreAdditionalProjectSources" />
+  </Target>
+
+  <!-- A project's host services and events, generated from their TypeScript definitions before it compiles:
+
+         <FuiCsHostServices Include="../host/host-services.ts" Definition="demoHostServices"
+                            CSharp="Host/DemoShell.HostServices.g.cs" Module="Host/demo_host_services.g.ts" />
+         <FuiCsHostEvents Include="../host/host-events.ts" Definition="demoHostEvents" CSharp="Host/DemoShell.HostEvents.g.cs" />
+
+       Host services generate a TypeScript module as well, which is bundled into obj/ and linked as the application's
+       fui_app_host_services module (fui_worker_host_services in a worker project). -->
+  <PropertyGroup>
+    <_FuiCsHostTarget>page</_FuiCsHostTarget>
+    <_FuiCsHostTarget Condition="'$(NetWasmJavaScriptHosts)' == 'worker'">worker</_FuiCsHostTarget>
+    <_FuiCsHostModuleName>fui_app_host_services</_FuiCsHostModuleName>
+    <_FuiCsHostModuleName Condition="'$(_FuiCsHostTarget)' == 'worker'">fui_worker_host_services</_FuiCsHostModuleName>
+    <_FuiCsHostCheckFlag Condition="'$(FuiCsCheckGenerated)' == 'true'"> --check</_FuiCsHostCheckFlag>
+  </PropertyGroup>
+  <ItemGroup>
+    <NetWasmJavaScriptModule Include="@(FuiCsHostServices->'$(_FuiCsHostModuleDirectory)$(_FuiCsHostModuleName).mjs')" Module="$(_FuiCsHostModuleName)" />
+  </ItemGroup>
+
+  <Target Name="FuiCsGenerateHost" AfterTargets="FuiCsJavaScript" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true' AND '@(FuiCsHostServices)@(FuiCsHostEvents)' != ''">
+    <PropertyGroup>
+      <_FuiCsHostTools>$(MSBuildThisFileDirectory)build/hostgen/</_FuiCsHostTools>
+    </PropertyGroup>
+    <Exec Condition="'@(FuiCsHostServices)' != ''" WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="node &quot;$(_FuiCsHostTools)generate-host-services.mjs&quot; &quot;%(FuiCsHostServices.Identity)&quot; %(FuiCsHostServices.Definition) &quot;%(FuiCsHostServices.CSharp)&quot; &quot;%(FuiCsHostServices.Module)&quot; --namespace $(RootNamespace) --target $(_FuiCsHostTarget)$(_FuiCsHostCheckFlag)" />
+    <Exec Condition="'@(FuiCsHostEvents)' != ''" WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="node &quot;$(_FuiCsHostTools)generate-host-events.mjs&quot; &quot;%(FuiCsHostEvents.Identity)&quot; %(FuiCsHostEvents.Definition) &quot;%(FuiCsHostEvents.CSharp)&quot; --namespace $(RootNamespace)$(_FuiCsHostCheckFlag)" />
+    <Exec Condition="'@(FuiCsHostServices)' != ''" WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="npx --no-install esbuild &quot;%(FuiCsHostServices.Module)&quot; --bundle --format=esm --platform=browser --target=es2022 --log-level=warning $(_FuiCsRuntimeAlias) --outfile=&quot;$(_FuiCsHostModuleDirectory)$(_FuiCsHostModuleName).mjs&quot;" />
+  </Target>
+
+</Project>

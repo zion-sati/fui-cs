@@ -1,0 +1,16 @@
+<Project Sdk="NetWasm.Sdk/{NETWASM_SDK_VERSION}">
+
+  <!-- Code the routes share: the route paths and the page layout with its navigation bar. -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>FuiRoutedApp.Shared</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FuiCs" Version="{FUICS_VERSION}" />
+  </ItemGroup>
+
+</Project>

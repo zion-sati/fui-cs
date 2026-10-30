@@ -1,0 +1,43 @@
+<Project>
+
+  <!-- The worker exports and entry, compiled into each fui-cs worker project (a JsModule with
+       NetWasmJavaScriptHosts=worker). The FuiCs.Worker package ships this file as buildTransitive/FuiCs.Worker.targets;
+       in this repository Directory.Build.targets imports it. A worker registers its entries by convention:
+
+         static class FuiWorker
+         {
+             public static void Register(WorkerEntries entries) => entries.Add("name", RunAsync);
+         }
+
+       in its root namespace, or the class FuiWorkerType names. -->
+  <PropertyGroup>
+    <_FuiCsIsWorker Condition="'$(TargetFramework)' == 'netwasm0.1' AND '$(NetWasmJavaScriptHosts)' == 'worker' AND '$(IsTestProject)' != 'true'">true</_FuiCsIsWorker>
+    <!-- The prebuilt worker JSImport module: the package's js/ folder, or build/worker-imports/ in the repository. -->
+    <FuiCsWorkerJavaScriptModulesDirectory Condition="'$(FuiCsWorkerJavaScriptModulesDirectory)' == ''">$(MSBuildThisFileDirectory)js/</FuiCsWorkerJavaScriptModulesDirectory>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(_FuiCsIsWorker)' == 'true'">
+    <Compile Include="$(MSBuildThisFileDirectory)WorkerExports.cs" Link="FuiCs\WorkerExports.cs" Visible="false" />
+    <NetWasmJavaScriptModule Include="$(FuiCsWorkerJavaScriptModulesDirectory)fui_worker_host.mjs" Module="fui_worker_host" />
+  </ItemGroup>
+
+  <Target Name="FuiCsGenerateWorkerEntry" BeforeTargets="CoreCompile" Condition="'$(_FuiCsIsWorker)' == 'true'">
+    <PropertyGroup>
+      <_FuiWorkerType>$(FuiWorkerType)</_FuiWorkerType>
+      <_FuiWorkerType Condition="'$(_FuiWorkerType)' == '' AND '$(RootNamespace)' != ''">$(RootNamespace).FuiWorker</_FuiWorkerType>
+      <_FuiWorkerType Condition="'$(_FuiWorkerType)' == ''">FuiWorker</_FuiWorkerType>
+      <_FuiCsWorkerEntryPath>$(IntermediateOutputPath)FuiCs.WorkerEntry.g.cs</_FuiCsWorkerEntryPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <_FuiCsWorkerEntryLine Include="// &lt;auto-generated/&gt; FuiCs worker entry, written by FuiCs.Worker.Exports.targets. The worker defines $(_FuiWorkerType).Register(WorkerEntries) (set FuiWorkerType to use another class)." />
+      <_FuiCsWorkerEntryLine Include="namespace FuiCs.Workers.Hosting%3B" />
+      <_FuiCsWorkerEntryLine Include="public static partial class WorkerExports { static partial void RegisterEntries(global::FuiCs.Workers.WorkerEntries entries) =&gt; global::$(_FuiWorkerType).Register(entries)%3B }" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_FuiCsWorkerEntryPath)" Lines="@(_FuiCsWorkerEntryLine)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(_FuiCsWorkerEntryPath)" />
+      <FileWrites Include="$(_FuiCsWorkerEntryPath)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

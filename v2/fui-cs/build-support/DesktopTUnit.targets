@@ -1,0 +1,20 @@
+<Project>
+
+  <!-- The desktop lane of a test project under dotnet test. Upstream TUnit runs only on Microsoft.Testing.Platform,
+       which the .NET 10+ dotnet test drives only when global.json switches every test project to it, while the NetWasm
+       lane runs on VSTest. So for the desktop target framework, the VSTest target dotnet test calls runs TUnit's own
+       test executable instead, and dotnet test runs both lanes. Tests share the process-wide runtime and application
+       state, so they run one at a time, as NetWasm's sequential runner does. Directory.Build.targets imports this file
+       for a test project's net11.0 build only. -->
+
+  <!-- Microsoft.Testing.Platform's own hook before VSTest rejects VSTest on the .NET 10+ SDK; this lane does not use
+       VSTest, so the hook is replaced (Microsoft.Testing.Platform.MSBuild 2.5's _MTPBeforeVSTest). -->
+  <Target Name="_MTPBeforeVSTest" />
+
+  <Target Name="VSTest">
+    <CallTarget Targets="Build" Condition="'$(VSTestNoBuild)' != 'true'" />
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(TargetPath)&quot; --maximum-parallel-tests 1 --progress off"
+          WorkingDirectory="$(OutDir)" StandardOutputImportance="high" />
+  </Target>
+
+</Project>

@@ -1,0 +1,12 @@
+# Analyzer settings for the FuiCs SDK, which builds with documentation and the recommended analyzers on.
+[*.cs]
+
+# Nodes and other disposables release native handles deterministically and never declare finalizers, so their
+# Dispose methods have nothing to suppress.
+dotnet_diagnostic.CA1816.severity = none
+
+# PersistedCodecs.Int32 and PersistedCodecs.Single are named after the types they encode.
+dotnet_diagnostic.CA1720.severity = none
+
+# FontStack keeps its name: a stack of fonts tried in order.
+dotnet_code_quality.CA1711.allowed_suffixes = Stack

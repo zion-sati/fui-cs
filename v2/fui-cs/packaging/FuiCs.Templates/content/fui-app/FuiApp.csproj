@@ -1,0 +1,18 @@
+<Project Sdk="NetWasm.Sdk/{NETWASM_SDK_VERSION}">
+
+  <!-- A FuiCs application: dotnet publish -c Release -o site writes a static site to site/. -->
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>page</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>FuiApp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FuiCs" Version="{FUICS_VERSION}" />
+  </ItemGroup>
+
+</Project>

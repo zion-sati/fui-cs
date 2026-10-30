@@ -8,16 +8,16 @@
     "node": ">=24"
   },
   "scripts": {
-    "prepare:runtime": "node scripts/prepare-runtime.mjs",
-    "build": "npm run prepare:runtime && npm --prefix v2/fui-cs run build",
-    "test": "npm run test:unit",
+    "build": "npm --prefix v2/fui-cs run build",
+    "test": "dotnet test FuiCs.slnx",
     "test:unit": "npm --prefix v2/fui-cs run test:unit",
-    "test:integration": "npm run build && playwright test -c v2/fui-cs/playwright.config.ts",
+    "test:browser": "npm --prefix v2/fui-cs run test:browser",
+    "test:package": "npm --prefix v2/fui-cs run test:package",
     "typecheck": "npm --prefix v2/fui-cs run typecheck",
     "serve": "http-server public -p 8080"
   },
   "dependencies": {
-    "@effindomv2/runtime": "^0.2.0"
+    "@effindomv2/runtime": "0.3.0"
   },
   "devDependencies": {
     "@playwright/test": "1.59.1",

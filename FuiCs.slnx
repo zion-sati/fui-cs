@@ -1,0 +1,28 @@
+<Solution>
+  <Folder Name="/browser-app/">
+    <Project Path="v2/fui-cs/browser-app/FuiCs.Browser.csproj" />
+    <Project Path="v2/fui-cs/browser-worker/FuiCs.TestWorker.csproj" />
+  </Folder>
+  <Folder Name="/demo/">
+    <Project Path="v2/fui-cs/demo/DesignSystem/FuiCs.Demo.DesignSystem.csproj" />
+    <Project Path="v2/fui-cs/demo/Home/FuiCs.Demo.Home.csproj" />
+    <Project Path="v2/fui-cs/demo/Workbench/FuiCs.Demo.Workbench.csproj" />
+    <Project Path="v2/fui-cs/demo/ImmediateDrawing/FuiCs.Demo.ImmediateDrawing.csproj" />
+    <Project Path="v2/fui-cs/demo/ScrollbarGutter/FuiCs.Demo.ScrollbarGutter.csproj" />
+    <Project Path="v2/fui-cs/demo/TemplatedControls/FuiCs.Demo.TemplatedControls.csproj" />
+    <Project Path="v2/fui-cs/demo/AdvancedControls/FuiCs.Demo.AdvancedControls.csproj" />
+    <Project Path="v2/fui-cs/demo/AdvancedControlsWorker/FuiCs.Demo.AdvancedControlsWorker.csproj" />
+  </Folder>
+  <Folder Name="/packaging/">
+    <Project Path="v2/fui-cs/packaging/FuiCs.Runtime/FuiCs.Runtime.csproj" />
+    <Project Path="v2/fui-cs/packaging/FuiCs.Templates/FuiCs.Templates.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="v2/fui-cs/src/FuiCs/FuiCs.csproj" />
+    <Project Path="v2/fui-cs/src/FuiCs.Worker/FuiCs.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="v2/fui-cs/tests/FuiCs.Tests/FuiCs.Tests.csproj" />
+    <Project Path="v2/fui-cs/tests/FuiCs.BrowserTests/FuiCs.BrowserTests.csproj" />
+  </Folder>
+</Solution>

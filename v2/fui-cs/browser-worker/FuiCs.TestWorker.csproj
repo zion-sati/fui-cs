@@ -1,0 +1,23 @@
+<Project Sdk="NetWasm.Sdk">
+
+  <!-- The browser test app's worker: a NetWasm JSExport worker that the worker test page starts. -->
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>worker</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FuiCs.TestWorker</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\FuiCs.Worker\FuiCs.Worker.csproj" />
+  </ItemGroup>
+
+  <!-- The worker's own host services, generated into Host/ when the project builds. -->
+  <ItemGroup>
+    <FuiCsHostServices Include="worker-host-services.ts" Definition="probeWorkerHostServices" CSharp="Host/ProbeWorker.HostServices.g.cs" Module="Host/probe_worker_host_services.g.ts" />
+  </ItemGroup>
+
+</Project>

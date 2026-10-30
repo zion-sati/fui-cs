@@ -1,0 +1,30 @@
+<Project Sdk="NetWasm.Sdk">
+
+  <!-- The demo's workbench route: an application of its own, loaded by the demo shell for /v2/fui-cs/demo/workbench/. -->
+  <PropertyGroup>
+    <OutputType>JsModule</OutputType>
+    <NetWasmJavaScriptHosts>page</NetWasmJavaScriptHosts>
+    <TargetFramework>netwasm0.1</TargetFramework>
+    <NetWasmOptimization>Oz</NetWasmOptimization>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FuiCs.Demo.Workbench</RootNamespace>
+  </PropertyGroup>
+
+  <!-- The shell raises its events in every route, so each route generates them into Host/ when it builds. -->
+  <ItemGroup>
+    <FuiCsHostEvents Include="../host/host-events.ts" Definition="demoHostEvents" CSharp="Host/DemoShell.HostEvents.g.cs" />
+  </ItemGroup>
+
+  <!-- Route-relative assets: published into the route's folder, where assets/... resolves from its address. -->
+  <ItemGroup>
+    <Content Include="..\..\browser-app\assets\halves.png" Link="assets\halves.png" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\browser-app\assets\block.svg" Link="assets\block.svg" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FuiCs\FuiCs.csproj" />
+    <ProjectReference Include="..\DesignSystem\FuiCs.Demo.DesignSystem.csproj" />
+  </ItemGroup>
+
+</Project>
