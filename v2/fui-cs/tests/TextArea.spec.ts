@@ -115,7 +115,8 @@ test.describe('TextArea on the advanced controls route', () => {
     await expect.poll(async () => await settings(page)).toContain('Wrapping: off');
     await clickArea(page, 0.5, 0.2);
     await page.keyboard.press('Home');
-    await page.keyboard.type('x'.repeat(220));
+    // One input event: typing each key waits about a frame, which on a CI runner outlasts the test's timeout.
+    await page.keyboard.insertText('x'.repeat(220));
     // The long line overflows the area's viewport sideways.
     await expect.poll(async () => {
       const view = (await debugNodes(page)).find((node) => node.scroll.contentWidth > node.scroll.viewportWidth + 100 && node.scroll.viewportHeight > 150);
