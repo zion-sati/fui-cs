@@ -21,5 +21,7 @@ harness and `index.html` (unless the application publishes its own).
 
 Docs: <https://github.com/zion-sati/fui-cs/blob/main/docs/v2/fui-cs/SDK_INDEX.md>
 
+Live demo, built from these packages: <https://fui-cs-demo.effindom.dev/>
+
 License: AGPL-3.0-only, or the commercial terms in the repository's
 `v2/fui-cs/COMMERCIAL.md`.

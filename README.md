@@ -2,6 +2,9 @@
 
 > **Early stage.** FUI-CS is under active development and its API will change.
 
+**[→ Live demo](https://fui-cs-demo.effindom.dev/)**, built from these packages
+with `dotnet publish` ([source](https://github.com/zion-sati/fui-cs-demo/tree/main/fui-cs-demo-source)).
+
 FUI-CS builds EffinDOM applications in C#. An application is a tree of retained
 nodes and controls (layout boxes, text, images, buttons, toggles, sliders,
 dropdowns, combo boxes, text inputs, dialogs, menus, popups, tooltips, virtual
@@ -10,6 +13,8 @@ builders. It compiles to WebAssembly with [NetWasm](https://github.com/zion-sati
 as a `JsModule` and drives the EffinDOM UI runtime in the browser.
 
 ```csharp
+using FuiCs;
+
 namespace MyApp;
 
 static class FuiProgram

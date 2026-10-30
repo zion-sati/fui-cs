@@ -47,8 +47,9 @@ public sealed class PackageTests
     }
 
     [After(Class)]
-    public static void RemoveWorkDirectory()
+    public static async Task CleanUp()
     {
+        await ForgetCachedPackages();
         if (Directory.Exists(WorkDirectory))
         {
             Directory.Delete(WorkDirectory, recursive: true);
@@ -75,7 +76,9 @@ public sealed class PackageTests
 
     /// <summary>
     /// Packs reuse their versions (a -local one, or a rehearsal's), so NuGet would restore an earlier pack from its
-    /// cache: the cached copies of the versions just packed, and only those, are removed first.
+    /// cache: the cached copies of the versions just packed, and only those, are removed before the restore. They are
+    /// removed again afterwards, since a rehearsal's version is the one nuget.org will serve, and a later restore on
+    /// this machine would otherwise take the local pack for it.
     /// </summary>
     private static async Task ForgetCachedPackages()
     {

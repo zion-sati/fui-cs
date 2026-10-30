@@ -15,10 +15,11 @@
        named after its project file.
 
        FuiCsHarness names a TypeScript harness to bundle (with npx esbuild, so it needs Node and esbuild) in place of the
-       prebuilt one, for an application with host services or events; FuiCsHarnessEsbuildArguments adds esbuild
-       options. FuiCsPage names a page to publish in place of the default one; __FUICS_ROUTE_BASE__ in it becomes
-       FuiCsRouteBase. Either way the page loads fui-app.js, bridge.js and harness.js, which a routed site's page names
-       from the site's base, since every route's folder holds a copy. -->
+       prebuilt one, for a site that needs a harness of its own; FuiCsHarnessEsbuildArguments adds esbuild options. Host
+       services and events need none: an application calls the page's JavaScript through [JSImport] into a module it
+       declares as a NetWasmJavaScriptModule. FuiCsPage names a page to publish in place of the default one;
+       __FUICS_ROUTE_BASE__ in it becomes FuiCsRouteBase. Either way the page loads fui-app.js, bridge.js and harness.js,
+       which a routed site's page names from the site's base, since every route's folder holds a copy. -->
   <PropertyGroup>
     <FuiCsWebShell Condition="'$(FuiCsWebShell)' == ''">true</FuiCsWebShell>
     <FuiCsRouteBase Condition="'$(FuiCsRouteBase)' == ''">/</FuiCsRouteBase>
