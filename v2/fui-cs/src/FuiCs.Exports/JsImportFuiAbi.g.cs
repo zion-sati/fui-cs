@@ -192,6 +192,7 @@ internal sealed partial class JsImportFuiAbi : IFuiAbi
     public void UiSetScrollFriction(ulong handle, float friction) => UiImports.UiSetScrollFriction(handle, friction);
     public void UiSetScrollOffset(ulong handle, float offsetX, float offsetY) => UiImports.UiSetScrollOffset(handle, offsetX, offsetY);
     public void UiSetScrollProxyTarget(ulong handle, ulong scrollHandle) => UiImports.UiSetScrollProxyTarget(handle, scrollHandle);
+    public void UiSetScrollWheelLatching(ulong handle, bool latching) => UiImports.UiSetScrollWheelLatching(handle, latching);
     public void UiSetSelectable(ulong handle, bool selectable, uint selectionColor) => UiImports.UiSetSelectable(handle, selectable, selectionColor);
     public void UiSetSelectionArea(ulong handle, bool isArea) => UiImports.UiSetSelectionArea(handle, isArea);
     public void UiSetSelectionAreaBarrier(ulong handle, bool isBarrier) => UiImports.UiSetSelectionAreaBarrier(handle, isBarrier);
@@ -480,6 +481,9 @@ internal static partial class UiImports
 
     [JSImport("ui_set_scroll_proxy_target", "effindom_v2_ui")]
     internal static extern void UiSetScrollProxyTarget(ulong handle, ulong scrollHandle);
+
+    [JSImport("ui_set_scroll_wheel_latching", "effindom_v2_ui")]
+    internal static extern void UiSetScrollWheelLatching(ulong handle, bool latching);
 
     [JSImport("ui_set_selectable", "effindom_v2_ui")]
     internal static extern void UiSetSelectable(ulong handle, bool selectable, uint selectionColor);

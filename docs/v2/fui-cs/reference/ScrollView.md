@@ -32,6 +32,7 @@ Fluent members: [`ScrollViewExtensions`](ScrollViewExtensions.md).
 - `VerticalOffset`: The vertical offset, in pixels.
 - `ViewportHeight`: The viewport's height.
 - `ViewportWidth`: The visible width the host last reported, or a fixed pixel [`ScrollView.Width`](ScrollView.md) before then.
+- `WheelLatching`: Whether a mouse-wheel run that starts here stays here at the edges until the wheel pauses (true by default), as browsers latch wheel scrolling. When false, the rest of the run scrolls the nearest ancestor that can move.
 - `Width`: A fixed width; [`Length.Auto`](Length.md) sizes to content. Setting it replaces any fill.
 
 ## Methods

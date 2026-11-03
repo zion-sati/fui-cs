@@ -68,6 +68,7 @@ internal static class Ui
     public static void SetScrollEnabled(ulong handle, bool enabledX, bool enabledY) => Runtime.Abi.UiSetScrollEnabled(handle, enabledX, enabledY);
     public static void SetScrollFriction(ulong handle, float friction) => Runtime.Abi.UiSetScrollFriction(handle, friction);
     public static void SetSmoothScrolling(ulong handle, bool smoothScrolling) => Runtime.Abi.UiSetSmoothScrolling(handle, smoothScrolling);
+    public static void SetScrollWheelLatching(ulong handle, bool latching) => Runtime.Abi.UiSetScrollWheelLatching(handle, latching);
     public static void SetFocusable(ulong handle, bool flag, int tabIndex) => Runtime.Abi.UiSetFocusable(handle, flag, tabIndex);
     public static void RequestFocus(ulong handle) => Runtime.Abi.UiRequestFocus(handle);
     public static void SetText(ulong handle, string text) => Runtime.Abi.UiSetText(handle, text);

@@ -813,6 +813,11 @@ public partial class RecordingFuiAbi : IFuiAbi
         Calls.Add(new AbiCall("ui_set_scroll_proxy_target", [handle, scrollHandle]));
     }
 
+    public virtual void UiSetScrollWheelLatching(ulong handle, bool latching)
+    {
+        Calls.Add(new AbiCall("ui_set_scroll_wheel_latching", [handle, latching]));
+    }
+
     public virtual void UiSetSelectable(ulong handle, bool selectable, uint selectionColor)
     {
         Calls.Add(new AbiCall("ui_set_selectable", [handle, selectable, selectionColor]));

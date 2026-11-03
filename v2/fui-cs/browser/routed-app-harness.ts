@@ -55,6 +55,8 @@ function startRoutes(config: FuiCsRoutes): void {
     onRouteLoading(route): void {
       loadingRoute = route;
       window.__fuiReady = false;
+      // The route's title, which the page also carries, until its application sets a caption of its own.
+      document.title = route.title;
     },
     onRouteReady(): void {
       window.__fuiReady = true;

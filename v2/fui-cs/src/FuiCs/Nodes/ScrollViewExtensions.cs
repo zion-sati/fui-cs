@@ -33,6 +33,13 @@ public static class ScrollViewExtensions
             return scroll;
         }
 
+        /// <summary>Sets <see cref="ScrollView.WheelLatching"/>.</summary>
+        public TScroll WheelLatching(bool latching = true)
+        {
+            scroll.WheelLatching = latching;
+            return scroll;
+        }
+
         /// <summary>Sets the share of the main axis the view starts from before growing.</summary>
         public TScroll FlexBasis(float basis)
         {

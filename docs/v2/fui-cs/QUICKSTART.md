@@ -61,10 +61,21 @@ the SDK, the web shell and, through `FuiCs.Runtime`, the EffinDOM runtime.
 dotnet new install FuiCs.Templates
 dotnet new fui-app -o MyApp
 cd MyApp
+dotnet run
+```
+
+`dotnet run` builds the application and serves it at `http://localhost:5080/`
+until you stop it. To deploy it, publish it instead:
+
+```bash
 dotnet publish -c Release -o site
 ```
 
 `site/` is a static site; serve it at the root of any static file server.
+A Release build runs the EffinDOM runtime in release mode, where its developer
+tools stay off; set `FuiCsDevToolsDomMirror` to `on-requested` (or `enabled`)
+in the project to keep them, as `fui-config.json`'s `web.devTools.domMirror`
+does for FUI-AS and FUI-RS applications.
 `dotnet new fui-routed-app` creates a site with two routes and a library they
 share (see [Routed Applications](#routed-applications)).
 
@@ -372,7 +383,10 @@ Publishing it publishes each route into the folder its path names, with the
 routed harness, the route table in `fui-app.js` and a copy of the page in every
 route's folder, so each address loads directly. A route's module is named after
 its project file. `FuiCsRouteBase` sets the address the site is served at (`/`
-by default) and `FuiCsHomeTitle` the home route's title.
+by default) and `FuiCsHomeTitle` the home route's title. Each page is titled by
+its route, and the title follows the route as the address changes, until the
+route's application sets a caption of its own with `Application.SetCaption`.
+`dotnet run` serves a routed site with every route.
 
 ## Host Services and Events
 

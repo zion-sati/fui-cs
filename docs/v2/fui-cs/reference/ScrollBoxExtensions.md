@@ -16,3 +16,4 @@ Fluent configuration for [`ScrollBox`](ScrollBox.md).
 - `SmoothScrolling(bool)`: Sets [`ScrollBox.SmoothScrolling`](ScrollBox.md).
 - `VerticalScrollBarVisibility(ScrollBarVisibility)`: Sets [`ScrollBox.VerticalScrollBarVisibility`](ScrollBox.md).
 - `VerticalScrollEnabled(bool)`: Sets [`ScrollBox.IsVerticalScrollEnabled`](ScrollBox.md).
+- `WheelLatching(bool)`: Sets [`ScrollBox.WheelLatching`](ScrollBox.md).

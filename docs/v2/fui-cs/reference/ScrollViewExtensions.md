@@ -16,3 +16,4 @@ Fluent configuration for [`ScrollView`](ScrollView.md).
 - `SmoothScrolling(bool)`: Sets [`ScrollView.SmoothScrolling`](ScrollView.md).
 - `Transitions(NodeTransitions)`: Sets which property changes animate; only the scroll offset applies.
 - `VerticalScrollEnabled(bool)`: Sets [`ScrollView.IsVerticalScrollEnabled`](ScrollView.md).
+- `WheelLatching(bool)`: Sets [`ScrollView.WheelLatching`](ScrollView.md).

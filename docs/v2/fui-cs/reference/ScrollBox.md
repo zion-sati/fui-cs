@@ -22,6 +22,7 @@ Fluent members: [`ScrollBoxExtensions`](ScrollBoxExtensions.md).
 - `VerticalScrollBar`: The vertical bar.
 - `VerticalScrollBarVisibility`: When the vertical bar shows.
 - `Viewport`: The scroll view holding the content.
+- `WheelLatching`: Whether a mouse-wheel run that starts in the box stays in it at the edges until the wheel pauses (true by default); see [`ScrollView.WheelLatching`](ScrollView.md).
 
 ## Methods
 

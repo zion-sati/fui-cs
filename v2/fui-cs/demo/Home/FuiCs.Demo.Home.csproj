@@ -15,6 +15,7 @@
     <FuiCsHomeTitle>Dashboard</FuiCsHomeTitle>
     <FuiCsHarness>../harness.ts</FuiCsHarness>
     <FuiCsPage>../index.html</FuiCsPage>
+    <FuiCsDevToolsDomMirror>on-requested</FuiCsDevToolsDomMirror>
   </PropertyGroup>
 
   <ItemGroup>

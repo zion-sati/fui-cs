@@ -113,6 +113,24 @@ public sealed class ScrollViewTests
     }
 
     [Test]
+    public async Task WheelRunsLatchByDefaultAndAViewOrBoxCanOptOut()
+    {
+        var abi = TestRuntime.Start(new LayoutAbi());
+        var scroll = new ScrollView();
+        var handle = scroll.Build();
+        var latchedAtBuild = abi.HasCall("ui_set_scroll_wheel_latching", handle, true);
+        abi.Calls.Clear();
+
+        scroll.WheelLatching(false);
+        var box = new ScrollBox().WheelLatching(false);
+
+        await Assert.That(latchedAtBuild).IsTrue();
+        await Assert.That(abi.HasCall("ui_set_scroll_wheel_latching", handle, false)).IsTrue();
+        await Assert.That(scroll.WheelLatching).IsFalse();
+        await Assert.That(box.Viewport.WheelLatching).IsFalse();
+    }
+
+    [Test]
     public async Task ScrollViewsAndFlexBoxesShareTheFluentContentMembers()
     {
         TestRuntime.Start(new LayoutAbi());

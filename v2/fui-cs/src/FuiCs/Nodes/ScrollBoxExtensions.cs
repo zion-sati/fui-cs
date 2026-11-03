@@ -47,6 +47,13 @@ public static class ScrollBoxExtensions
             return box;
         }
 
+        /// <summary>Sets <see cref="ScrollBox.WheelLatching"/>.</summary>
+        public TBox WheelLatching(bool latching = true)
+        {
+            box.WheelLatching = latching;
+            return box;
+        }
+
         /// <summary>Sets <see cref="ScrollBox.PersistScroll"/>.</summary>
         public TBox PersistScroll(bool persist = true)
         {

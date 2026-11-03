@@ -45,6 +45,7 @@ public class ScrollView : Node, ISizable, IContentContainer
     private bool verticalScrollEnabled = true;
     private float? friction;
     private bool smoothScrolling = true;
+    private bool wheelLatching = true;
     private bool hasOffset;
     private bool hasScrollContentSize;
     private float? scrollContentWidth;
@@ -155,6 +156,23 @@ public class ScrollView : Node, ISizable, IContentContainer
             {
                 Ui.SetSmoothScrolling(Handle, value);
                 NotifyRetainedMutation();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Whether a mouse-wheel run that starts here stays here at the edges until the wheel pauses (true by default), as
+    /// browsers latch wheel scrolling. When false, the rest of the run scrolls the nearest ancestor that can move.
+    /// </summary>
+    public bool WheelLatching
+    {
+        get => wheelLatching;
+        set
+        {
+            wheelLatching = value;
+            if (IsBuilt)
+            {
+                Ui.SetScrollWheelLatching(Handle, value);
             }
         }
     }
@@ -346,6 +364,7 @@ public class ScrollView : Node, ISizable, IContentContainer
         KeyboardScrollTracker.Register(this);
         Ui.SetScrollEnabled(Handle, horizontalScrollEnabled, verticalScrollEnabled);
         Ui.SetSmoothScrolling(Handle, smoothScrolling);
+        Ui.SetScrollWheelLatching(Handle, wheelLatching);
         if (friction is { } amount)
         {
             Ui.SetScrollFriction(Handle, amount);

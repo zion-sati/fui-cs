@@ -2,7 +2,13 @@
 
 A routed FuiCs application. Each route is an application of its own; one shell
 loads the route the address names and swaps routes in place as links are
-followed. Publish it and serve the static site:
+followed. Run it, which serves it at `http://localhost:5080/` until you stop it:
+
+```bash
+dotnet run
+```
+
+To deploy it, publish it and serve the static site:
 
 ```bash
 dotnet publish -c Release -o site

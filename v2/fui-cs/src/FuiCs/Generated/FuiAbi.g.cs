@@ -392,6 +392,7 @@ public partial interface IFuiAbi
     void UiSetScrollFriction(ulong handle, float friction);
     void UiSetScrollOffset(ulong handle, float offsetX, float offsetY);
     void UiSetScrollProxyTarget(ulong handle, ulong scrollHandle);
+    void UiSetScrollWheelLatching(ulong handle, bool latching);
     void UiSetSelectable(ulong handle, bool selectable, uint selectionColor);
     void UiSetSelectionArea(ulong handle, bool isArea);
     void UiSetSelectionAreaBarrier(ulong handle, bool isBarrier);

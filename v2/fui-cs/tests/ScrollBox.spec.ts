@@ -27,7 +27,7 @@ test.describe('ScrollBox in the host', () => {
 
     await wheelOver(page, 'list-box', 0, 400, 3);
 
-    // Wheel input past the list's end chains to the page box, so positions are compared within the list.
+    // Positions are compared within the list, in case the page box moved.
     await expect.poll(async () => (await offsets(page, 'list-log'))[1]).toBe(1000);
     const list = await boundsOf(page, 'list-box');
     const last = await boundsOf(page, 'row-40');
@@ -65,6 +65,21 @@ test.describe('ScrollBox in the host', () => {
     await page.mouse.move(thumb.x + 300, thumb.y + 80, { steps: 4 });
     await expect.poll(async () => (await offsets(page, 'list-log'))[1]).toBe(480);
     await page.mouse.up();
+  });
+
+  test('a wheel run that reaches the end of the list stays on it until the wheel pauses', async ({ page }) => {
+    await openTestPage(page, baseUrl(), 'scrollbox');
+
+    // One quick run: the list reaches its end, and the rest of the run does not scroll the page box around it.
+    await wheelOver(page, 'list-box', 0, 400, 5);
+    await expect.poll(async () => (await offsets(page, 'list-log'))[1]).toBe(1000);
+    expect((await offsets(page, 'page-log'))[1]).toBe(0);
+
+    // After a pause, the next wheel event starts a run on the scroll view that can still move.
+    await page.waitForTimeout(450);
+    await wheelOver(page, 'list-box', 0, 200);
+    await expect.poll(async () => (await offsets(page, 'page-log'))[1]).toBeGreaterThan(0);
+    expect((await offsets(page, 'list-log'))[1]).toBe(1000);
   });
 
   test('outside the list the wheel scrolls the page box it is nested in', async ({ page }) => {

@@ -376,6 +376,10 @@ export function ui_set_scroll_proxy_target(handle: bigint, scrollHandle: bigint)
   callHarness(MODULE, "ui_set_scroll_proxy_target", () => [handle, scrollHandle]);
 }
 
+export function ui_set_scroll_wheel_latching(handle: bigint, latching: boolean): void {
+  callHarness(MODULE, "ui_set_scroll_wheel_latching", () => [handle, latching ? 1 : 0]);
+}
+
 export function ui_set_selectable(handle: bigint, selectable: boolean, selectionColor: number): void {
   callHarness(MODULE, "ui_set_selectable", () => [handle, selectable ? 1 : 0, selectionColor]);
 }

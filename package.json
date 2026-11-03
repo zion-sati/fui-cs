@@ -17,7 +17,7 @@
     "serve": "http-server public -p 8080"
   },
   "dependencies": {
-    "@effindomv2/runtime": "0.4.0"
+    "@effindomv2/runtime": "0.4.1"
   },
   "devDependencies": {
     "@playwright/test": "1.59.1",

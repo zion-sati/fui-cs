@@ -101,6 +101,16 @@ public class ScrollBox : FlexBox
         set => Viewport.SmoothScrolling = value;
     }
 
+    /// <summary>
+    /// Whether a mouse-wheel run that starts in the box stays in it at the edges until the wheel pauses (true by
+    /// default); see <see cref="ScrollView.WheelLatching"/>.
+    /// </summary>
+    public bool WheelLatching
+    {
+        get => Viewport.WheelLatching;
+        set => Viewport.WheelLatching = value;
+    }
+
     /// <summary>Whether the offset is saved with the page's UI state under the box's <see cref="Node.NodeId"/>.</summary>
     public bool PersistScroll
     {

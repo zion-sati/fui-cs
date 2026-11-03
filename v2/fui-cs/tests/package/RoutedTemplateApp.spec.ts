@@ -17,11 +17,14 @@ test('the routed template loads each route at its address and links between them
   await page.goto(`${baseUrl()}/`);
   await waitForReady(page);
   await expect.poll(async () => await labels(page)).toContain('Clicked 0 times');
+  // Each page is titled by its route, and the title follows the route as the links swap it in place.
+  expect(await page.title()).toBe('Home');
 
   await clickLabel(page, 'Settings');
   await expect.poll(async () => await pathname(page)).toBe('/settings/');
   await waitForReady(page);
   await expect.poll(async () => await labels(page)).toContain('Notifications are on');
+  expect(await page.title()).toBe('Settings');
   await clickLabel(page, 'Notifications');
   await expect.poll(async () => await labels(page)).toContain('Notifications are off');
 
@@ -29,9 +32,11 @@ test('the routed template loads each route at its address and links between them
   await expect.poll(async () => await pathname(page)).toBe('/');
   await waitForReady(page);
   await expect.poll(async () => await labels(page)).toContain('Clicked 0 times');
+  expect(await page.title()).toBe('Home');
 
   // A route's address loads it directly.
   await page.goto(`${baseUrl()}/settings/`);
+  expect(await page.title()).toBe('Settings');
   await waitForReady(page);
   await expect.poll(async () => await labels(page)).toContain('Notifications are on');
   expect(errors).toEqual([]);
