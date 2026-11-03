@@ -10,6 +10,7 @@ Fluent members: [`SliderExtensions`](SliderExtensions.md).
 
 - `Colors`: Colors over the theme's for each part.
 - `DefaultTemplate`: A rounded track with an accent fill and a round thumb.
+- `FillsLength`: Whether the slider fills its container along its orientation, as `FillWidth` or `FillHeight` does, instead of a fixed [`Slider.Length`](Slider.md). Setting [`Slider.Length`](Slider.md) returns to a fixed length.
 - `IsDragging`: Whether the thumb is being dragged.
 - `Length`: The length of the parts along the slider, in pixels; at least one pixel more than the thumb.
 - `Maximum`: The highest value; lowering it below [`Slider.Minimum`](Slider.md) lowers the minimum too.

@@ -7,6 +7,7 @@ Fluent configuration for [`Slider`](Slider.md).
 ## Methods
 
 - `Colors(SliderColors)`: Sets [`Slider.Colors`](Slider.md).
+- `FillLength()`: Sets [`Slider.FillsLength`](Slider.md): the slider fills its container along its orientation.
 - `Length(float)`: Sets [`Slider.Length`](Slider.md).
 - `Maximum(float)`: Sets [`Slider.Maximum`](Slider.md).
 - `Minimum(float)`: Sets [`Slider.Minimum`](Slider.md).

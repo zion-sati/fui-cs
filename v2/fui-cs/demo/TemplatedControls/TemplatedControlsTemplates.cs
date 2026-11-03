@@ -130,38 +130,55 @@ internal static class TemplatedControlsTemplates
         }
     }
 
-    /// <summary>A 22 px thumb over an 8 px track, with 6 px of room across the slider.</summary>
+    /// <summary>
+    /// A 22 px thumb over an 8 px track, with 6 px of room across the slider, laid out relative to the root the slider
+    /// sizes: a rail between the thumb's centre at each end holds the track, the fill and a spacer as long as the
+    /// value's share, which the thumb follows.
+    /// </summary>
     private sealed class HouseSliderPresenter : SliderPresenter
     {
         private const float TrackThickness = 8.0f;
+        private readonly FlexBox rail = new FlexBox().AlignItems(AlignItems.Center);
         private readonly FlexBox track = new FlexBox().PositionAbsolute();
-        private readonly FlexBox fill = new FlexBox().PositionAbsolute();
-        private readonly FlexBox thumb = new FlexBox().PositionAbsolute().Width(22.0f).Height(22.0f);
+        private readonly FlexBox fillBox = new FlexBox().PositionAbsolute();
+        private readonly FlexBox fill = new();
+        private readonly FlexBox spacer = new();
+        private readonly FlexBox thumb = new FlexBox().Width(22.0f).Height(22.0f);
 
         public HouseSliderPresenter()
             : base(new FlexBox(), 22.0f, 6.0f)
         {
-            Root.Child(track).Child(fill).Child(thumb);
+            fillBox.Child(fill);
+            rail.Child(track).Child(fillBox).Child(spacer).Child(thumb);
+            Root.Child(rail);
         }
 
-        public override void Layout(SliderVisualState state, float length)
+        public override void Layout(SliderVisualState state)
         {
-            var available = length > ThumbSize ? length - ThumbSize : 0.0f;
-            var fraction = state.NormalizedValue;
+            var percent = state.NormalizedValue * 100.0f;
             var crossAxisInset = CrossAxisExtra * 0.5f;
-            var trackInset = crossAxisInset + ((ThumbSize - TrackThickness) * 0.5f);
+            var trackOffset = (ThumbSize - TrackThickness) * 0.5f;
+            var halfThumb = ThumbSize * 0.5f;
             if (state.Orientation == Orientation.Vertical)
             {
-                Root.Width(ThumbSize + CrossAxisExtra).Height(length);
-                track.Width(TrackThickness).Height(available).Position(trackInset, ThumbSize * 0.5f);
-                fill.Width(TrackThickness).Height(available * fraction).Position(trackInset, (ThumbSize * 0.5f) + (available * (1.0f - fraction)));
-                thumb.Position(crossAxisInset, available - (available * fraction));
+                Root.FlexDirection(FlexDirection.Row);
+                rail.FlexDirection(FlexDirection.Column).Width(ThumbSize).FillHeight().Margin(crossAxisInset, halfThumb, crossAxisInset, halfThumb);
+                track.Width(TrackThickness).Height(Length.Percent(100.0f)).Position(trackOffset, 0.0f);
+                fillBox.FlexDirection(FlexDirection.Column).JustifyContent(JustifyContent.End)
+                    .Width(TrackThickness).Height(Length.Percent(100.0f)).Position(trackOffset, 0.0f);
+                fill.Width(Length.Percent(100.0f)).Height(Length.Percent(percent));
+                spacer.Width(1.0f).Height(Length.Percent(100.0f - percent));
+                thumb.Position(0.0f, -halfThumb);
                 return;
             }
-            Root.Width(length).Height(ThumbSize + CrossAxisExtra);
-            track.Width(available).Height(TrackThickness).Position(ThumbSize * 0.5f, trackInset);
-            fill.Width(available * fraction).Height(TrackThickness).Position(ThumbSize * 0.5f, trackInset);
-            thumb.Position(available * fraction, crossAxisInset);
+            Root.FlexDirection(FlexDirection.Column);
+            rail.FlexDirection(FlexDirection.Row).Height(ThumbSize).FillWidth().Margin(halfThumb, crossAxisInset, halfThumb, crossAxisInset);
+            track.Width(Length.Percent(100.0f)).Height(TrackThickness).Position(0.0f, trackOffset);
+            fillBox.FlexDirection(FlexDirection.Row).JustifyContent(JustifyContent.Start)
+                .Width(Length.Percent(100.0f)).Height(TrackThickness).Position(0.0f, trackOffset);
+            fill.Width(Length.Percent(percent)).Height(Length.Percent(100.0f));
+            spacer.Width(Length.Percent(percent)).Height(1.0f);
+            thumb.Position(-halfThumb, 0.0f);
         }
 
         public override void Apply(Theme theme, SliderVisualState state, SliderColors? colors)

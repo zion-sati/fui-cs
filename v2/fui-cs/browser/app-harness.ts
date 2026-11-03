@@ -4,7 +4,7 @@
 
 import { startHarness, type HarnessExports, type HarnessState } from '@effindomv2/runtime/managed-harness';
 
-import { createNetWasmAppInstantiator, NETWASM_TIER3_WASM_PATH, type NetWasmApp } from './tier3-adapter.ts';
+import { createNetWasmAppInstantiator, NETWASM_TIER3_WASM_PATH, netWasmLoadingDetail, type NetWasmApp } from './tier3-adapter.ts';
 
 interface FuiCsAppConfig {
   /** The application's NetWasm module, relative to the page. */
@@ -37,8 +37,10 @@ async function openAppModule(): Promise<NetWasmApp> {
   return await (open as () => Promise<NetWasmApp>)();
 }
 
+const appModulePath = window.__fuiCsApp?.module;
 startHarness<AppExports>({
   wasmPath: NETWASM_TIER3_WASM_PATH,
+  ...(appModulePath === undefined ? {} : { loadingDetail: netWasmLoadingDetail(appModulePath) }),
   instantiateApp: createNetWasmAppInstantiator(openAppModule),
   run(exports): void {
     exports.__runApp();

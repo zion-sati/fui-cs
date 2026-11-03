@@ -7,6 +7,7 @@ Fluent configuration for [`ProgressBar`](ProgressBar.md).
 ## Methods
 
 - `FillColor(Color)`: Sets [`ProgressBar.FillColor`](ProgressBar.md).
+- `FillLength()`: Sets [`ProgressBar.FillsLength`](ProgressBar.md): the bar fills its container along its orientation.
 - `Length(float)`: Sets [`ProgressBar.Length`](ProgressBar.md).
 - `Maximum(float)`: Sets [`ProgressBar.Maximum`](ProgressBar.md).
 - `Minimum(float)`: Sets [`ProgressBar.Minimum`](ProgressBar.md).

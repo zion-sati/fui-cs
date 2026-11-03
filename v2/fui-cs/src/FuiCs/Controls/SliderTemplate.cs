@@ -26,13 +26,14 @@ public readonly record struct SliderVisualState(
     bool IsEnabled);
 
 /// <summary>
-/// The track, fill and thumb a <see cref="SliderTemplate"/> builds inside a slider. The slider positions
-/// <see cref="Root"/> and maps pointer positions with <see cref="ThumbSize"/>; <see cref="Layout"/> places the parts
-/// along the slider's length and <see cref="Apply"/> styles them.
+/// The track, fill and thumb a <see cref="SliderTemplate"/> builds inside a slider. The slider sizes <see cref="Root"/>
+/// to its track area, a fixed length or the length it fills, and maps pointer positions with <see cref="ThumbSize"/>;
+/// <see cref="Layout"/> places the parts relative to the root, as percentages along the track rather than pixels, and
+/// <see cref="Apply"/> styles them.
 /// </summary>
 public abstract class SliderPresenter(FlexBox root, float thumbSize, float crossAxisExtra = 2.0f)
 {
-    /// <summary>The parts' root, which the slider positions.</summary>
+    /// <summary>The parts' root, which the slider sizes to its track area.</summary>
     public FlexBox Root { get; } = root ?? throw new ArgumentNullException(nameof(root));
 
     /// <summary>The thumb's extent along the slider, which the value range spans less of.</summary>
@@ -41,8 +42,8 @@ public abstract class SliderPresenter(FlexBox root, float thumbSize, float cross
     /// <summary>Extra room across the slider beyond the thumb.</summary>
     public float CrossAxisExtra { get; } = Math.Max(0.0f, crossAxisExtra);
 
-    /// <summary>Places the parts for <paramref name="state"/> along <paramref name="length"/> pixels.</summary>
-    public abstract void Layout(SliderVisualState state, float length);
+    /// <summary>Places the parts for <paramref name="state"/> relative to <see cref="Root"/>.</summary>
+    public abstract void Layout(SliderVisualState state);
 
     /// <summary>
     /// Styles the parts for <paramref name="state"/>, with <paramref name="colors"/> over the theme's.

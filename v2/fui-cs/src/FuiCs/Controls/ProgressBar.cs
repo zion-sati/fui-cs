@@ -15,6 +15,7 @@ public class ProgressBar : FlexBox
     private float maximum = 100.0f;
     private float value;
     private float length = 220.0f;
+    private bool fillsLength;
     private float thickness = 14.0f;
     private Orientation orientation = FuiCs.Orientation.Horizontal;
     private Color? trackColor;
@@ -77,6 +78,21 @@ public class ProgressBar : FlexBox
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
             length = value;
+            fillsLength = false;
+            Refresh();
+        }
+    }
+
+    /// <summary>
+    /// Whether the bar fills its container along its orientation, as <c>FillWidth</c> or <c>FillHeight</c> does,
+    /// instead of a fixed <see cref="Length"/>. Setting <see cref="Length"/> returns to a fixed length.
+    /// </summary>
+    public bool FillsLength
+    {
+        get => fillsLength;
+        set
+        {
+            fillsLength = value;
             Refresh();
         }
     }
@@ -142,26 +158,39 @@ public class ProgressBar : FlexBox
     {
         var theme = Theme.Active.Value;
         var range = maximum - minimum;
-        var fraction = range > 0.0f ? Math.Clamp((value - minimum) / range, 0.0f, 1.0f) : 0.0f;
-        var innerLength = Math.Max(0.0f, length - (BorderWidth * 2.0f));
-        var innerThickness = Math.Max(0.0f, thickness - (BorderWidth * 2.0f));
+        var percent = range > 0.0f ? Math.Clamp((value - minimum) / range, 0.0f, 1.0f) * 100.0f : 0.0f;
+        // The fill is the value's share of the bar inside its border, whatever length the bar has.
         if (orientation == FuiCs.Orientation.Vertical)
         {
             FlexDirection = FuiCs.FlexDirection.Column;
             JustifyContent = FuiCs.JustifyContent.End;
             Width = thickness;
-            Height = length;
-            fill.Width = innerThickness;
-            fill.Height = innerLength * fraction;
+            if (fillsLength)
+            {
+                FillHeight = true;
+            }
+            else
+            {
+                Height = length;
+            }
+            fill.Width = FuiCs.Length.Percent(100.0f);
+            fill.Height = FuiCs.Length.Percent(percent);
         }
         else
         {
             FlexDirection = FuiCs.FlexDirection.Row;
             JustifyContent = FuiCs.JustifyContent.Start;
-            Width = length;
             Height = thickness;
-            fill.Width = innerLength * fraction;
-            fill.Height = innerThickness;
+            if (fillsLength)
+            {
+                FillWidth = true;
+            }
+            else
+            {
+                Width = length;
+            }
+            fill.Width = FuiCs.Length.Percent(percent);
+            fill.Height = FuiCs.Length.Percent(100.0f);
         }
         var corners = cornerRadius ?? new CornerRadius(thickness * 0.5f);
         base.CornerRadius = corners;

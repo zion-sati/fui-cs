@@ -1,11 +1,18 @@
 namespace FuiCs;
 
-/// <summary>The default slider parts: a rounded track, an accent fill up to the value and a round thumb.</summary>
+/// <summary>
+/// The default slider parts: a rounded track, an accent fill up to the value and a round thumb. A rail between the
+/// thumb's centre at each end holds the track, the fill and a spacer as long as the value's share of the rail; the thumb
+/// follows the spacer, shifted back half its size onto the spacer's end.
+/// </summary>
 internal sealed class SliderParts : SliderPresenter
 {
     private readonly float trackThickness;
+    private readonly FlexBox rail;
     private readonly FlexBox track;
+    private readonly FlexBox fillBox;
     private readonly FlexBox fill;
+    private readonly FlexBox spacer;
     private readonly FlexBox thumb;
 
     private SliderParts(float thumbSize, float trackThickness)
@@ -13,35 +20,49 @@ internal sealed class SliderParts : SliderPresenter
     {
         this.trackThickness = Math.Clamp(trackThickness, 1.0f, ThumbSize);
         track = new FlexBox().PositionAbsolute();
-        fill = new FlexBox().PositionAbsolute();
-        thumb = new FlexBox().PositionAbsolute().Width(ThumbSize).Height(ThumbSize);
-        Root.Child(track).Child(fill).Child(thumb);
+        fill = new FlexBox().Width(Length.Percent(0.0f)).Height(Length.Percent(100.0f));
+        fillBox = new FlexBox().PositionAbsolute().Child(fill);
+        spacer = new FlexBox().Width(Length.Percent(0.0f)).Height(1.0f);
+        thumb = new FlexBox().Width(ThumbSize).Height(ThumbSize);
+        rail = new FlexBox().AlignItems(AlignItems.Center).Child(track).Child(fillBox).Child(spacer).Child(thumb);
+        Root.Child(rail);
     }
 
     public static SliderPresenter Create(SliderSizing? sizing) => new SliderParts(sizing?.ThumbSize ?? 18.0f, sizing?.TrackThickness ?? 6.0f);
 
-    public override void Layout(SliderVisualState state, float length)
+    public override void Layout(SliderVisualState state)
     {
-        var available = Math.Max(0.0f, length - ThumbSize);
-        var fraction = Math.Clamp(state.NormalizedValue, 0.0f, 1.0f);
+        var percent = Math.Clamp(state.NormalizedValue, 0.0f, 1.0f) * 100.0f;
         var crossInset = CrossAxisExtra * 0.5f;
-        var trackOffset = crossInset + ((ThumbSize - trackThickness) * 0.5f);
+        var trackOffset = (ThumbSize - trackThickness) * 0.5f;
         var halfThumb = ThumbSize * 0.5f;
         if (state.Orientation == Orientation.Vertical)
         {
-            var fillLength = MathF.Round(available * fraction);
-            Root.Width = ThumbSize + CrossAxisExtra;
-            Root.Height = length;
-            track.Width(trackThickness).Height(available).Position(trackOffset, halfThumb);
-            fill.Width(trackThickness).Height(fillLength).Position(trackOffset, halfThumb + available - fillLength);
-            thumb.Position(crossInset, available - (available * fraction));
+            Root.FlexDirection = FlexDirection.Row;
+            rail.FlexDirection(FlexDirection.Column).Width(ThumbSize).FillHeight().Margin(crossInset, halfThumb, crossInset, halfThumb);
+            track.Width(trackThickness).Height(Length.Percent(100.0f)).Position(trackOffset, 0.0f);
+            // The fill grows up from the rail's bottom.
+            fillBox.FlexDirection(FlexDirection.Column)
+                .JustifyContent(JustifyContent.End)
+                .Width(trackThickness)
+                .Height(Length.Percent(100.0f))
+                .Position(trackOffset, 0.0f);
+            fill.Width(Length.Percent(100.0f)).Height(Length.Percent(percent));
+            spacer.Width(1.0f).Height(Length.Percent(100.0f - percent));
+            thumb.Position(0.0f, -halfThumb);
             return;
         }
-        Root.Width = length;
-        Root.Height = ThumbSize + CrossAxisExtra;
-        track.Width(available).Height(trackThickness).Position(halfThumb, trackOffset);
-        fill.Width(available * fraction).Height(trackThickness).Position(halfThumb, trackOffset);
-        thumb.Position(available * fraction, crossInset);
+        Root.FlexDirection = FlexDirection.Column;
+        rail.FlexDirection(FlexDirection.Row).Height(ThumbSize).FillWidth().Margin(halfThumb, crossInset, halfThumb, crossInset);
+        track.Width(Length.Percent(100.0f)).Height(trackThickness).Position(0.0f, trackOffset);
+        fillBox.FlexDirection(FlexDirection.Row)
+            .JustifyContent(JustifyContent.Start)
+            .Width(Length.Percent(100.0f))
+            .Height(trackThickness)
+            .Position(0.0f, trackOffset);
+        fill.Width(Length.Percent(percent)).Height(Length.Percent(100.0f));
+        spacer.Width(Length.Percent(percent)).Height(1.0f);
+        thumb.Position(-halfThumb, 0.0f);
     }
 
     public override void Apply(Theme theme, SliderVisualState state, SliderColors? colors)

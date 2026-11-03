@@ -4,7 +4,7 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { clickLabel, collectErrors, labels, serveSite, waitForReady } from './package-support.ts';
+import { clickLabel, collectErrors, labels, recordLoadingDetails, serveSite, waitForReady } from './package-support.ts';
 
 const baseUrl = serveSite('FUICS_ROUTED_PACKAGE_SITE', 11_395);
 
@@ -34,5 +34,19 @@ test('the routed template loads each route at its address and links between them
   await page.goto(`${baseUrl()}/settings/`);
   await waitForReady(page);
   await expect.poll(async () => await labels(page)).toContain('Notifications are on');
+  expect(errors).toEqual([]);
+});
+
+test('the loading overlay shows the runtime\'s progress, then names the application\'s WebAssembly', async ({ page }) => {
+  const errors = collectErrors(page);
+  const loadingDetails = await recordLoadingDetails(page);
+  await page.goto(`${baseUrl()}/`);
+  await waitForReady(page);
+
+  const details = await loadingDetails();
+  expect(details.some((detail) => /^Runtime assets \d+ \/ \d+$/u.test(detail)), details.join(' | ')).toBe(true);
+  expect(details.some((detail) => /^Built-in fonts \d+ \/ \d+$/u.test(detail)), details.join(' | ')).toBe(true);
+  expect(details).toContain('Loading RoutedTemplateApp.wasm');
+  expect(details.filter((detail) => detail.includes('data:'))).toEqual([]);
   expect(errors).toEqual([]);
 });

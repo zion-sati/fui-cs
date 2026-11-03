@@ -28,8 +28,11 @@ public sealed class RangeControlTests
 
     private static FlexBox Fill(ProgressBar bar) => (FlexBox)bar.Children[0];
 
-    /// <summary>The default slider parts: track, fill and thumb.</summary>
-    private static FlexBox Part(Slider slider, int index) => (FlexBox)slider.Children[0].Children[index];
+    private static bool IsPercent(Length length, float percent) =>
+        length.Unit == Unit.Percent && Math.Abs(length.Value - percent) < 0.001f;
+
+    /// <summary>The default slider parts on its rail: track, fill box, spacer and thumb.</summary>
+    private static FlexBox Part(Slider slider, int index) => (FlexBox)slider.Children[0].Children[0].Children[index];
 
     [Test]
     public async Task AProgressBarFillsInProportionToItsValue()
@@ -42,10 +45,11 @@ public sealed class RangeControlTests
 
         await Assert.That(bar.Width).IsEqualTo((Length)220.0f);
         await Assert.That(bar.Height).IsEqualTo((Length)14.0f);
-        await Assert.That(quarter).IsEqualTo((Length)54.5f);
+        // The fill is the value's share of the bar inside its border.
+        await Assert.That(quarter).IsEqualTo(Length.Percent(25.0f));
         await Assert.That(bar.Value).IsEqualTo(100.0f);
-        await Assert.That(Fill(bar).Width).IsEqualTo((Length)218.0f);
-        await Assert.That(Fill(bar).Height).IsEqualTo((Length)12.0f);
+        await Assert.That(Fill(bar).Width).IsEqualTo(Length.Percent(100.0f));
+        await Assert.That(Fill(bar).Height).IsEqualTo(Length.Percent(100.0f));
         await Assert.That(bar.SemanticValueRange).IsEqualTo((SemanticValueRange?)new SemanticValueRange(100.0f, 0.0f, 100.0f));
         await Assert.That(bar.Background).IsEqualTo(Colors.ScrollbarTrack);
         await Assert.That(Fill(bar).Background).IsEqualTo(Colors.Accent);
@@ -62,7 +66,7 @@ public sealed class RangeControlTests
         await Assert.That(bar.Width).IsEqualTo((Length)10.0f);
         await Assert.That(bar.Height).IsEqualTo((Length)102.0f);
         await Assert.That(bar.JustifyContent).IsEqualTo(JustifyContent.End);
-        await Assert.That(Fill(bar).Height).IsEqualTo((Length)50.0f);
+        await Assert.That(Fill(bar).Height).IsEqualTo(Length.Percent(50.0f));
         await Assert.That(bar.SemanticOrientation).IsEqualTo(Orientation.Vertical);
     }
 
@@ -84,6 +88,25 @@ public sealed class RangeControlTests
     }
 
     [Test]
+    public async Task AProgressBarCanFillItsContainerAlongItsOrientation()
+    {
+        TestRuntime.Start(new LayoutAbi());
+        var bar = new ProgressBar(40.0f).FillLength();
+
+        var filledAcross = bar.FillWidth;
+        var fill = Fill(bar).Width;
+        bar.Orientation = Orientation.Vertical;
+        var filledUp = bar.FillHeight;
+        bar.Length = 200.0f;
+
+        await Assert.That(filledAcross).IsTrue();
+        await Assert.That(fill).IsEqualTo(Length.Percent(40.0f));
+        await Assert.That(filledUp).IsTrue();
+        await Assert.That(bar.FillsLength).IsFalse();
+        await Assert.That(bar.Height).IsEqualTo((Length)200.0f);
+    }
+
+    [Test]
     public async Task ASliderIsAFocusableSliderSizedAroundItsTrack()
     {
         var abi = TestRuntime.Start(new LayoutAbi());
@@ -96,8 +119,10 @@ public sealed class RangeControlTests
         await Assert.That(slider.Width).IsEqualTo((Length)190.0f);
         await Assert.That(slider.Height).IsEqualTo((Length)30.0f);
         await Assert.That(slider.SemanticValueRange).IsEqualTo((SemanticValueRange?)new SemanticValueRange(30.0f, 0.0f, 100.0f));
-        await Assert.That(Part(slider, 1).Width).IsEqualTo((Length)(162.0f * 0.3f));
-        await Assert.That(Part(slider, 2).Background).IsEqualTo(Colors.Accent);
+        // The fill and the spacer the thumb follows are the value's share of the rail between the thumb's ends.
+        await Assert.That(IsPercent(((FlexBox)Part(slider, 1).Children[0]).Width, 30.0f)).IsTrue();
+        await Assert.That(IsPercent(Part(slider, 2).Width, 30.0f)).IsTrue();
+        await Assert.That(Part(slider, 3).Background).IsEqualTo(Colors.Accent);
     }
 
     [Test]
@@ -184,6 +209,22 @@ public sealed class RangeControlTests
     }
 
     [Test]
+    public async Task AFillingSliderMapsThePointerOverItsLaidOutLength()
+    {
+        var abi = TestRuntime.Start(new LayoutAbi());
+        var slider = new Slider().Step(5.0f).FillLength();
+        var handle = slider.Build();
+        abi.Bounds[handle] = new Rect(0.0f, 0.0f, 100.0f, 30.0f);
+
+        // 100 wide: a 90 px track inside the chrome, 72 px between the thumb's centre at each end.
+        HostInput.Pointer(PointerEventType.Down, handle, 50.0f, 15.0f);
+        HostInput.Pointer(PointerEventType.Up, handle, 50.0f, 15.0f);
+
+        await Assert.That(slider.FillWidth).IsTrue();
+        await Assert.That(slider.Value).IsEqualTo(50.0f);
+    }
+
+    [Test]
     public async Task ADisabledSliderFadesAndIgnoresInput()
     {
         var abi = TestRuntime.Start(new LayoutAbi());
@@ -238,7 +279,7 @@ public sealed class RangeControlTests
 
     private sealed class RecordingParts(List<SliderVisualState> states) : SliderPresenter(new FlexBox(), 10.0f)
     {
-        public override void Layout(SliderVisualState state, float length)
+        public override void Layout(SliderVisualState state)
         {
         }
 

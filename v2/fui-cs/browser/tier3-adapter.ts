@@ -24,6 +24,15 @@ import { installNetWasmWorkers } from './workers.ts';
  */
 export const NETWASM_TIER3_WASM_PATH = 'data:application/wasm;base64,AGFzbQEAAAA=';
 
+/**
+ * The loading overlay's text for a NetWasm application module, naming the WebAssembly NetWasm loads beside it; the
+ * harness would otherwise name `wasmPath`, the empty module above.
+ */
+export function netWasmLoadingDetail(modulePath: string): string {
+  const file = modulePath.split('/').at(-1) ?? modulePath;
+  return `Loading ${file.replace(/\.mjs$/u, '.wasm')}`;
+}
+
 export type NetWasmApp = Readonly<Record<string, unknown>>;
 export type OpenNetWasmApp = () => Promise<NetWasmApp>;
 

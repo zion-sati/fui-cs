@@ -33,6 +33,13 @@ public static class ProgressBarExtensions
             return bar;
         }
 
+        /// <summary>Sets <see cref="ProgressBar.FillsLength"/>: the bar fills its container along its orientation.</summary>
+        public TBar FillLength()
+        {
+            bar.FillsLength = true;
+            return bar;
+        }
+
         /// <summary>Sets <see cref="ProgressBar.Thickness"/>.</summary>
         public TBar Thickness(float thickness)
         {

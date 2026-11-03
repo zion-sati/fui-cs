@@ -63,22 +63,18 @@ public sealed class RoutePageView : IDisposable
                 RoutePageSection.Spacer(12.0f),
                 highlightColumn));
 
-        var navBar = FlexBox.Row().FillWidth();
-        for (var index = 0; index < model.NavItems.Count; ++index)
+        // The links wrap rather than run past the page in a narrow window.
+        var navBar = FlexBox.Row().FlexWrap(FlexWrap.Wrap).FillWidth();
+        foreach (var item in model.NavItems)
         {
-            var item = model.NavItems[index];
-            if (index > 0)
-            {
-                navBar.Child(new FlexBox().Width(10.0f).Height(1.0f));
-            }
-            var link = new DemoNavLink(item.RoutePath, item.Label);
+            var link = new DemoNavLink(item.RoutePath, item.Label).Margin(0.0f, 0.0f, 10.0f, 8.0f);
             navLinks.Add((item.RoutePath, link));
             navBar.Child(link);
         }
 
         contentColumn = FlexBox.Column(
                 navBar,
-                RoutePageSection.Spacer(24.0f),
+                RoutePageSection.Spacer(16.0f),
                 accentBadge,
                 RoutePageSection.Spacer(16.0f),
                 titleText,

@@ -48,6 +48,26 @@ export async function waitForReady(page: Page): Promise<void> {
   await expect(page.locator('#effindom-loading-overlay')).toHaveCount(0);
 }
 
+/**
+ * Records every text the loading overlay's detail line shows while the page loads, holding each runtime asset back so
+ * the progress has steps to show. Returns a reader for the texts recorded so far.
+ */
+export async function recordLoadingDetails(page: Page): Promise<() => Promise<string[]>> {
+  await page.addInitScript(() => {
+    const seen: string[] = [];
+    (window as Window & { __loadingDetails?: string[] }).__loadingDetails = seen;
+    new MutationObserver(() => {
+      const text = document.getElementById('effindom-loading-detail')?.textContent ?? null;
+      if (text !== null && seen.at(-1) !== text) seen.push(text);
+    }).observe(document, { subtree: true, childList: true, characterData: true });
+  });
+  await page.route('**/runtime/**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await route.continue();
+  });
+  return async () => await page.evaluate(() => (window as Window & { __loadingDetails?: string[] }).__loadingDetails ?? []);
+}
+
 async function nodes(page: Page): Promise<readonly DebugNode[]> {
   return await page.evaluate(async () => {
     const debug = (window as DebugWindow).__fui_debug;

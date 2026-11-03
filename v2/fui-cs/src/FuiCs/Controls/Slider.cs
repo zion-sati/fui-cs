@@ -30,6 +30,7 @@ public class Slider : FlexBox
     private float step = 1.0f;
     private float value;
     private float length = 180.0f;
+    private bool fillsLength;
     private Orientation orientation = FuiCs.Orientation.Horizontal;
     private bool hovered;
     private bool focused;
@@ -49,7 +50,7 @@ public class Slider : FlexBox
         };
         drag.DraggingChanged += _ => Refresh();
         parts = DefaultTemplate.CreatePresenter(null);
-        AddChild(parts.Root.PositionAbsolute());
+        AddChild(parts.Root);
         SemanticRole = FuiCs.SemanticRole.Slider;
         SemanticOrientation = orientation;
         DefaultSemanticLabel = "Slider";
@@ -120,6 +121,21 @@ public class Slider : FlexBox
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
             length = value;
+            fillsLength = false;
+            Refresh();
+        }
+    }
+
+    /// <summary>
+    /// Whether the slider fills its container along its orientation, as <c>FillWidth</c> or <c>FillHeight</c> does,
+    /// instead of a fixed <see cref="Length"/>. Setting <see cref="Length"/> returns to a fixed length.
+    /// </summary>
+    public bool FillsLength
+    {
+        get => fillsLength;
+        set
+        {
+            fillsLength = value;
             Refresh();
         }
     }
@@ -289,9 +305,18 @@ public class Slider : FlexBox
     /// <summary>Sets the value under a node-local pointer position, measured from the thumb's center at either end.</summary>
     private void UpdateFromPointer(float x, float y)
     {
-        var available = EffectiveLength - parts.ThumbSize;
+        var vertical = orientation == FuiCs.Orientation.Vertical;
+        // A filling slider's length is whatever layout gave it.
+        var bounds = fillsLength ? GetBounds() : default;
+        var laidOut = (vertical ? bounds.Height : bounds.Width) - (OuterInset * 2.0f);
+        var trackLength = fillsLength && laidOut > 0.0f ? laidOut : EffectiveLength;
+        var available = trackLength - parts.ThumbSize;
+        if (available <= 0.0f)
+        {
+            return;
+        }
         var leading = OuterInset + (parts.ThumbSize * 0.5f);
-        var offset = orientation == FuiCs.Orientation.Vertical
+        var offset = vertical
             ? available - Math.Clamp(y - leading, 0.0f, available)
             : Math.Clamp(x - leading, 0.0f, available);
         SetValue(minimum + ((maximum - minimum) * (offset / available)), announce: true);
@@ -301,7 +326,7 @@ public class Slider : FlexBox
     {
         var previous = parts;
         parts = (template ?? DefaultTemplate).CreatePresenter(sizing);
-        ReplaceChildren([parts.Root.PositionAbsolute()]);
+        ReplaceChildren([parts.Root]);
         previous.Root.Dispose();
         Refresh();
     }
@@ -322,11 +347,33 @@ public class Slider : FlexBox
             IsEnabled);
         var along = EffectiveLength + (OuterInset * 2.0f);
         var across = parts.ThumbSize + parts.CrossAxisExtra + (OuterInset * 2.0f);
-        var vertical = orientation == FuiCs.Orientation.Vertical;
-        Width = vertical ? across : along;
-        Height = vertical ? along : across;
-        parts.Root.Position(ChromePadding + ContentInset, ChromePadding + ContentInset);
-        parts.Layout(state, EffectiveLength);
+        if (orientation == FuiCs.Orientation.Vertical)
+        {
+            Width = across;
+            if (fillsLength)
+            {
+                FillHeight = true;
+            }
+            else
+            {
+                Height = along;
+            }
+        }
+        else
+        {
+            Height = across;
+            if (fillsLength)
+            {
+                FillWidth = true;
+            }
+            else
+            {
+                Width = along;
+            }
+        }
+        // The parts fill the slider inside its focus chrome.
+        parts.Root.FillSize().Margin(ContentInset);
+        parts.Layout(state);
         SemanticValueRange = new SemanticValueRange(value, minimum, maximum);
         Cursor = IsEnabled ? CursorStyle.Pointer : CursorStyle.Default;
         CornerRadius = new CornerRadius(theme.Spacing.Sm);

@@ -40,6 +40,13 @@ public static class SliderExtensions
             return slider;
         }
 
+        /// <summary>Sets <see cref="Slider.FillsLength"/>: the slider fills its container along its orientation.</summary>
+        public TSlider FillLength()
+        {
+            slider.FillsLength = true;
+            return slider;
+        }
+
         /// <summary>Sets <see cref="Slider.Orientation"/>.</summary>
         public TSlider Orientation(Orientation orientation)
         {

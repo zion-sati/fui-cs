@@ -10,9 +10,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <!-- NetWasm.TUnit 0.10.6 is built from upstream TUnit v1.75.0; the desktop lane pins the same version. -->
+  <!-- NetWasm.TUnit 0.10.7 is built from upstream TUnit v1.75.0; the desktop lane pins the same version. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netwasm0.1'">
-    <PackageReference Include="NetWasm.TUnit" Version="0.10.6" />
+    <PackageReference Include="NetWasm.TUnit" Version="0.10.7" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
     <PackageReference Include="TUnit" Version="1.75.0" />

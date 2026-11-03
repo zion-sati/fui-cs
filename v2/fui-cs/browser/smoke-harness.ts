@@ -1,7 +1,7 @@
 import { startHarness, type HarnessExports, type HarnessState } from '@effindomv2/runtime/managed-harness';
 
 import { installProbeControls, probeHostEvents, probeHostServices } from './probe-host.ts';
-import { createNetWasmAppInstantiator, NETWASM_TIER3_WASM_PATH, type NetWasmApp } from './tier3-adapter.ts';
+import { createNetWasmAppInstantiator, NETWASM_TIER3_WASM_PATH, netWasmLoadingDetail, type NetWasmApp } from './tier3-adapter.ts';
 
 declare global {
   interface Window {
@@ -30,6 +30,7 @@ async function openSmokeModule(): Promise<NetWasmApp> {
 installProbeControls();
 startHarness<SmokeExports>({
   wasmPath: NETWASM_TIER3_WASM_PATH,
+  loadingDetail: netWasmLoadingDetail(SMOKE_MODULE_PATH),
   hostServices: probeHostServices,
   hostEvents: probeHostEvents,
   instantiateApp: createNetWasmAppInstantiator(openSmokeModule, { hostEvents: probeHostEvents }),

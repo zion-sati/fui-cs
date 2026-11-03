@@ -10,6 +10,7 @@ Fluent members: [`ProgressBarExtensions`](ProgressBarExtensions.md).
 
 - `CornerRadius`: The bar's corners; unset, the ends are fully rounded.
 - `FillColor`: The filled part; null uses the theme's accent.
+- `FillsLength`: Whether the bar fills its container along its orientation, as `FillWidth` or `FillHeight` does, instead of a fixed [`ProgressBar.Length`](ProgressBar.md). Setting [`ProgressBar.Length`](ProgressBar.md) returns to a fixed length.
 - `Length`: The bar's extent along its orientation, in pixels.
 - `Maximum`: The highest value; lowering it below [`ProgressBar.Minimum`](ProgressBar.md) lowers the minimum too.
 - `Minimum`: The lowest value; raising it above [`ProgressBar.Maximum`](ProgressBar.md) raises the maximum too.

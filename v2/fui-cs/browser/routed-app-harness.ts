@@ -6,7 +6,7 @@ import type { HarnessExports, HarnessState } from '@effindomv2/runtime/managed-h
 import { startRoutedHarness, type RoutedHarnessRoute } from '@effindomv2/runtime/routed-harness';
 
 import type { FuiCsRoute, FuiCsRoutes } from './fui-app-routes.ts';
-import { createNetWasmAppInstantiator, NETWASM_TIER3_WASM_PATH, type NetWasmApp } from './tier3-adapter.ts';
+import { createNetWasmAppInstantiator, NETWASM_TIER3_WASM_PATH, netWasmLoadingDetail, type NetWasmApp } from './tier3-adapter.ts';
 
 declare global {
   interface Window {
@@ -41,7 +41,11 @@ async function openRouteModule(): Promise<NetWasmApp> {
 
 function startRoutes(config: FuiCsRoutes): void {
   // The harness compiles wasmPath before it instantiates; a NetWasm route has no raw Tier 3 wasm.
-  const routes: readonly Route[] = config.routes.map((route) => ({ ...route, wasmPath: NETWASM_TIER3_WASM_PATH }));
+  const routes: readonly Route[] = config.routes.map((route) => ({
+    ...route,
+    wasmPath: NETWASM_TIER3_WASM_PATH,
+    loadingDetail: netWasmLoadingDetail(route.modulePath),
+  }));
   startRoutedHarness<RouteExports, Route>({
     shellId: 'fui-cs-routes',
     routeBase: config.routeBase,
